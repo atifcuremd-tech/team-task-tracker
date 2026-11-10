@@ -1,0 +1,582 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Team Task Tracker</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%230F6CBD'/%3E%3Cpath d='M4 8l3 3 5-6' stroke='white' stroke-width='2' fill='none'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --blue: #0F6CBD; --blue-dark: #0B4F8A; --blue-tint: #E8F1FA; --amber: #FFAA00;
+    --bg: #F5F7FA; --card: #FFFFFF; --text: #1F2933; --muted: #6B7785; --line: #E1E6EC;
+    --ns: #6B7785; --ns-bg: #EEF1F4; --ip: #9A5B00; --ip-bg: #FFF3D6;
+    --ok: #1E7B34; --ok-bg: #E3F4E7; --bl: #B42318; --bl-bg: #FDE8E7;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+    font: 15px/1.45 "Source Sans 3", system-ui, -apple-system, "Segoe UI", Arial, sans-serif; }
+  button, input, select, textarea { font: inherit; color: inherit; }
+  header { background: var(--blue); color: #fff; display: flex; align-items: center; gap: 16px;
+    padding: 10px 20px; position: sticky; top: 0; z-index: 5; }
+  header h1 { font-size: 19px; margin: 0; font-weight: 700; flex: 1; }
+  header label { font-size: 14px; opacity: .9; }
+  header select { background: #fff; border: 0; border-radius: 6px; padding: 5px 8px; min-width: 170px; color: var(--text); }
+  .layout { display: grid; grid-template-columns: 240px 1fr; min-height: calc(100vh - 52px); }
+  nav { background: var(--card); border-right: 1px solid var(--line); padding: 14px 10px; overflow-y: auto;
+    max-height: calc(100vh - 52px); position: sticky; top: 52px; }
+  nav .sec { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em;
+    color: var(--muted); margin: 14px 10px 6px; }
+  nav a { display: flex; justify-content: space-between; align-items: center; padding: 7px 10px;
+    border-radius: 6px; color: var(--text); text-decoration: none; font-size: 14.5px; }
+  nav a:hover { background: var(--blue-tint); }
+  nav a.on { background: var(--blue); color: #fff; }
+  nav a .n { font-size: 12px; background: var(--ns-bg); color: var(--muted); border-radius: 10px; padding: 0 7px; min-width: 22px; text-align: center; }
+  nav a.on .n { background: rgba(255,255,255,.25); color: #fff; }
+  nav a .me { font-size: 11px; color: var(--amber); font-weight: 700; margin-left: 6px; }
+  main { padding: 22px 26px; min-width: 0; }
+  h2 { margin: 0 0 4px; font-size: 24px; }
+  .sub { color: var(--muted); margin: 0 0 16px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+  .chip { border: 1px solid var(--line); background: var(--card); border-radius: 8px; padding: 8px 14px; cursor: pointer; text-align: left; }
+  .chip b { display: block; font-size: 20px; line-height: 1.1; }
+  .chip span { font-size: 13px; color: var(--muted); }
+  .chip.on { border-color: var(--blue); box-shadow: 0 0 0 2px var(--blue-tint); }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px; margin-bottom: 16px; }
+  .add { display: grid; grid-template-columns: 150px 180px 1fr 140px 1fr auto; gap: 8px; }
+  .add input, .add select, .tools input, .tools select, .card input, .card select, .card textarea {
+    border: 1px solid var(--line); border-radius: 6px; padding: 7px 9px; background: #fff; min-width: 0; }
+  input:focus, select:focus, textarea:focus { outline: 2px solid var(--blue); outline-offset: -1px; }
+  .btn { background: var(--blue); color: #fff; border: 0; border-radius: 6px; padding: 7px 16px; font-weight: 600; cursor: pointer; }
+  .btn:hover { background: var(--blue-dark); }
+  .btn.ghost { background: transparent; color: var(--blue); border: 1px solid var(--blue); }
+  .tools { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+  .tools input { flex: 1; min-width: 180px; }
+  .tools .range { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); }
+  .tools .range input { flex: 0 0 auto; min-width: 0; }
+  .tablewrap { background: var(--card); border: 1px solid var(--line); border-radius: 10px; overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; min-width: 760px; }
+  th { background: #1F3864; color: #fff; text-align: left; font-weight: 600; font-size: 14px; padding: 9px 10px; white-space: nowrap; }
+  td { border-top: 1px solid var(--line); padding: 4px 6px; vertical-align: middle; }
+  tbody tr:nth-child(even) { background: #F7FAFD; }
+  td input, td select { width: 100%; border: 1px solid transparent; background: transparent; border-radius: 5px; padding: 5px 6px; }
+  td input:hover, td select:hover { border-color: var(--line); background: #fff; }
+  td.date { width: 150px; } td.mem { width: 170px; white-space: nowrap; padding-left: 12px; } td.st { width: 140px; } td.x { width: 40px; text-align: center; }
+  select.s { font-weight: 600; border-radius: 14px; }
+  .s-NotStarted { color: var(--ns); background: var(--ns-bg) !important; }
+  .s-InProgress { color: var(--ip); background: var(--ip-bg) !important; }
+  .s-Completed { color: var(--ok); background: var(--ok-bg) !important; }
+  .s-Blocked { color: var(--bl); background: var(--bl-bg) !important; }
+  .del { border: 0; background: none; color: var(--muted); cursor: pointer; font-size: 18px; border-radius: 5px; width: 30px; height: 30px; }
+  .del:hover { background: var(--bl-bg); color: var(--bl); }
+  .empty { padding: 30px; text-align: center; color: var(--muted); }
+  .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #1F2933; color: #fff;
+    padding: 10px 18px; border-radius: 8px; opacity: 0; transition: opacity .2s; pointer-events: none; z-index: 10; }
+  .toast.show { opacity: 1; } .toast.err { background: var(--bl); }
+  .banner { background: #FFF3D6; border: 1px solid #F5D48A; border-radius: 10px; padding: 12px 14px; margin-bottom: 16px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .members { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
+  .members span { background: var(--blue-tint); border-radius: 16px; padding: 4px 6px 4px 12px; display: inline-flex; align-items: center; gap: 4px; }
+  .members button { border: 0; background: none; cursor: pointer; color: var(--muted); font-size: 16px; }
+  .members button:hover { color: var(--bl); }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  textarea { width: 100%; min-height: 140px; font-family: Consolas, monospace; font-size: 13px; }
+  h3 { margin: 0 0 6px; font-size: 17px; }
+  .hint { color: var(--muted); font-size: 13.5px; margin: 0 0 8px; }
+  .chip.static { cursor: default; }
+  .day h3 { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+  table.ro { min-width: 0; }
+  table.fixed { table-layout: fixed; min-width: 640px; } td.nt { width: 32%; } table.ro td { padding: 7px 10px; } table.ro th { padding: 7px 10px; }
+  .muted { color: var(--muted); }
+  .badge { display: inline-block; font-weight: 600; font-size: 13px; border-radius: 12px; padding: 2px 10px; white-space: nowrap; }
+  .linkbtn { border: 0; background: none; color: var(--blue); cursor: pointer; padding: 0; font-weight: 600; text-align: left; }
+  .linkbtn:hover { text-decoration: underline; }
+  .mpills { display: flex; flex-wrap: wrap; gap: 6px; }
+  .mpill { border: 1px solid var(--line); background: var(--card); color: var(--blue); border-radius: 999px; padding: 3px 10px; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+  .mpill b { color: var(--text, inherit); margin-left: 4px; }
+  .mpill:hover { border-color: var(--blue); }
+  .mpill.zero { color: var(--muted); font-weight: 400; }
+  .mpill.on { background: var(--blue); border-color: var(--blue); color: #fff; }
+  .mpill.on b { color: #fff; }
+  button:disabled { opacity: .4; cursor: default; }
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; }
+    nav { position: static; max-height: none; display: flex; overflow-x: auto; gap: 4px; padding: 8px; border-right: 0; border-bottom: 1px solid var(--line); }
+    nav .sec { display: none; } nav a { white-space: nowrap; }
+    .add { grid-template-columns: 1fr 1fr; } .add .wide { grid-column: 1 / -1; }
+    main { padding: 16px; } header { padding: 10px 16px; flex-wrap: wrap; }
+  }
+  .login { max-width: 380px; margin: 60px auto; display: grid; gap: 12px; }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+</head>
+<body>
+<header>
+  <h1>Team Task Tracker</h1>
+  <label for="me">You are</label>
+  <select id="me"></select>
+</header>
+<div class="layout">
+  <nav id="nav"></nav>
+  <main id="main"></main>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+let S = { members: [], statuses: [], tasks: [] };
+let filters = { q: '', status: '', from: '', to: '' };
+let currentView = null;
+const $ = (s, el = document) => el.querySelector(s);
+const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const cls = (st) => 's-' + String(st).replace(/\s/g, '');
+const today = () => { const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 10); };
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const fmtDate = (iso) => { const [y, m, d] = iso.split('-'); return `${d}-${MONTHS[m - 1]}-${y}`; };
+const store = { get: (k) => { try { return localStorage.getItem(k) || ''; } catch { return ''; } },
+                set: (k, v) => { try { localStorage.setItem(k, v); } catch {} } };
+const me = () => store.get('tt_me');
+
+function toast(msg, err) {
+  const t = $('#toast'); t.textContent = msg; t.className = 'toast show' + (err ? ' err' : '');
+  clearTimeout(t._h); t._h = setTimeout(() => (t.className = 'toast'), 2600);
+}
+// ---------- data: Supabase. Row level security lets only the signed in team login read or write. ----------
+// Fill these in from Supabase (see SETUP.txt). The URL and anon key are safe to publish; the password is the secret.
+const SUPABASE_URL = 'https://ybynpkunqhygujfzbidc.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlieW5wa3VucWh5Z3VqZnpiaWRjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQzMDY5MjMsImV4cCI6MjEwOTg4MjkyM30.TyfdxboPGwk668bVTAMXQMJeblRpgGoZ5dYsefCd4TA';
+const TEAM_EMAIL = 'tasktracker@curemd.com';   // the one shared login; must match the email in setup.sql
+const STATUSES = ['Not Started', 'In Progress', 'Completed', 'Blocked'];
+const configured = SUPABASE_URL.startsWith('https://');
+const sb = configured ? supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
+
+function check(error) {
+  if (!error) return;
+  const known = { '23503': 'Pick a team member from the list.', '23502': 'Pick a team member.',
+    '23514': 'Task name is required, and the status must be one from the list.',
+    '22007': 'Date must be a valid date.', '22008': 'Date must be a valid date.',
+    'PGRST116': 'Task not found. Someone may have deleted it.' };
+  throw new Error(known[error.code] || error.message || 'Something went wrong. Check your internet connection.');
+}
+const clean = (t) => { const o = {};
+  for (const k of ['date', 'member', 'task', 'status', 'notes']) if (k in t) o[k] = typeof t[k] === 'string' ? t[k].trim() : t[k];
+  return o; };
+const putTask = (t) => { const i = S.tasks.findIndex((x) => x.id === t.id); if (i < 0) S.tasks.push(t); else S.tasks[i] = t; };
+
+async function loadMembers() {
+  const { data, error } = await sb.from('members').select('name').eq('active', true).order('pos');
+  check(error); return data.map((x) => x.name);
+}
+const db = {
+  async state() {
+    // ponytail: downloads every task on page open; fine for years at this team's pace, add a date window if it ever feels slow
+    const tasks = [];
+    for (let from = 0; ; from += 1000) {   // the API returns at most 1000 rows per call
+      const { data, error } = await sb.from('tasks').select('*').order('id').range(from, from + 999);
+      check(error); tasks.push(...data);
+      if (data.length < 1000) break;
+    }
+    return { members: await loadMembers(), statuses: STATUSES, tasks };
+  },
+  async addTask(t) { const { data, error } = await sb.from('tasks').insert(clean(t)).select().single(); check(error); return data; },
+  async updateTask(id, patch) {
+    const { data, error } = await sb.from('tasks').update({ ...clean(patch), updated: new Date().toISOString() }).eq('id', id).select().single();
+    check(error); return data;
+  },
+  async deleteTask(id) { const { error } = await sb.from('tasks').delete().eq('id', id); check(error); },
+  async addMember(name) {
+    name = String(name).trim();
+    if (!name) throw new Error('Name is required.');
+    if (S.members.some((x) => x.toLowerCase() === name.toLowerCase())) throw new Error('That member already exists.');
+    const { error } = await sb.from('members').upsert({ name, active: true }, { onConflict: 'name' });   // also brings back a removed member
+    check(error); return db.state();
+  },
+  async removeMember(name) {   // removed members keep their tasks; they just leave the dropdowns
+    const { error } = await sb.from('members').update({ active: false }).eq('name', name); check(error); return db.state();
+  },
+  async importRows(rows) {
+    rows = rows.slice(0, 5000);
+    const fresh = [...new Set(rows.map((r) => r.member))].filter((n) => !S.members.includes(n));
+    if (fresh.length) { const { error } = await sb.from('members').upsert(fresh.map((name) => ({ name, active: true })), { onConflict: 'name' }); check(error); }
+    const { error } = await sb.from('tasks').insert(rows.map(clean)); check(error);
+    return { added: rows.length, ...(await db.state()) };
+  },
+};
+
+function view() {
+  const h = decodeURIComponent(location.hash.slice(1));
+  if (h === 'settings') return { kind: 'settings' };
+  if (h === 'week') return { kind: 'week' };
+  if (h.startsWith('m/')) return { kind: 'member', name: h.slice(2) };
+  return { kind: 'all' };
+}
+
+// ---------- rendering ----------
+function renderHeader() {
+  const sel = $('#me');
+  sel.innerHTML = '<option value="">Choose your name</option>' +
+    S.members.map((m) => `<option ${m === me() ? 'selected' : ''}>${esc(m)}</option>`).join('');
+}
+
+function renderNav() {
+  const v = view();
+  const total = (name) => S.tasks.filter((t) => t.member === name).length;
+  const link = (href, label, n, on, extra = '') =>
+    `<a href="${href}" class="${on ? 'on' : ''}"><span>${esc(label)}${extra}</span>${n === null ? '' : `<span class="n">${n}</span>`}</a>`;
+  const thisWeek = weekSoFar();
+  let html = link('#all', 'All Tasks', S.tasks.length, v.kind === 'all');
+  html += link('#week', 'This Week', S.tasks.filter((t) => thisWeek.includes(t.date)).length, v.kind === 'week');
+  if (me() && S.members.includes(me())) html += link('#m/' + encodeURIComponent(me()), 'My Tasks', total(me()), false);
+  html += '<div class="sec">Team members (total tasks)</div>';
+  html += S.members.map((m) => link('#m/' + encodeURIComponent(m), m, total(m),
+    v.kind === 'member' && v.name === m, m === me() ? '<span class="me">YOU</span>' : '')).join('');
+  html += '<div class="sec">Admin</div>' + link('#settings', 'Settings and import', null, v.kind === 'settings');
+  $('#nav').innerHTML = html;
+}
+
+function renderMain() {
+  const v = view();
+  const key = JSON.stringify(v);
+  if (key !== currentView) {          // build the static parts only when the view changes,
+    currentView = key;                // so the 15 second refresh never wipes a half typed task
+    filters = { ...filters, q: '', status: '' };   // date range carries over between views
+    if (v.kind === 'settings') { $('#main').innerHTML = settingsHTML(); bindSettings(); }
+    else if (v.kind === 'week') { $('#main').innerHTML = weekHTML(); bindWeek(); }
+    else { $('#main').innerHTML = listHTML(v); bindList(v); }
+  }
+  if (v.kind === 'settings') renderMembersList();
+  else if (v.kind === 'week') renderWeek();
+  else renderTable(v);
+}
+
+// ---------- this week view (Monday to Friday of the current week) ----------
+let week = { member: '' };
+const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+const pad = (n) => String(n).padStart(2, '0');
+const isoLocal = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+function weekDays() {
+  // Monday to Friday of the current week. On Saturday and Sunday this is the week just finished.
+  const d = new Date(); d.setHours(12, 0, 0, 0);    // noon avoids daylight saving edge cases
+  d.setDate(d.getDate() - ((d.getDay() + 6) % 7));  // back to Monday
+  return [0, 1, 2, 3, 4].map((i) => { const x = new Date(d); x.setDate(d.getDate() + i); return isoLocal(x); });
+}
+const weekSoFar = () => weekDays().filter((d) => d <= today());  // only days that have happened so far
+
+function weekHTML() {
+  return `
+    <h2>This Week</h2><p class="sub" id="wRange"></p>
+    <div class="tools">
+      <select id="wm" aria-label="Team member"><option value="">All members</option>${S.members.map((m) => `<option ${m === week.member ? 'selected' : ''}>${esc(m)}</option>`).join('')}</select>
+    </div>
+    <div class="chips" id="wChips"></div>
+    <div id="wBody"></div>`;
+}
+
+function bindWeek() {
+  $('#wm').addEventListener('change', (e) => { week.member = e.target.value; renderWeek(); });
+  $('#wBody').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-wm]'); if (!b) return; const m = b.dataset.wm;
+    week.member = week.member === m ? '' : m; $('#wm').value = week.member; renderWeek();
+  });
+}
+
+function renderWeek() {
+  const days = weekSoFar();
+  const last = days[days.length - 1];
+  $('#wRange').textContent = `Monday ${fmtDate(days[0])} to ${DAYS[days.length - 1]} ${fmtDate(last)}` +
+    (last === today() ? ' (today)' : '') + ', ' + (week.member ? `showing ${week.member}` : 'all members');
+  const list = S.tasks.filter((t) => days.includes(t.date) && (!week.member || t.member === week.member));
+  const count = (arr, s) => arr.filter((t) => t.status === s).length;
+  const chip = (label, n) => `<div class="chip static"><b>${n}</b><span>${esc(label)}</span></div>`;
+  $('#wChips').innerHTML = chip('Tasks', list.length) + S.statuses.map((s) => chip(s, count(list, s))).join('');
+
+  let html = '';
+  // team overview as compact pills, always shown; counts come from the whole team, not the filtered list
+  const all = S.tasks.filter((t) => days.includes(t.date));
+  html += `<div class="card"><h3>By member <span class="hint">click a name to see that person's week, click it again for everyone, hover for status breakdown</span></h3>
+    <div class="mpills">${S.members.map((m) => { const mine = all.filter((t) => t.member === m);
+      const tip = S.statuses.map((s) => `${s}: ${count(mine, s)}`).join(', ');
+      return `<button class="mpill${mine.length ? '' : ' zero'}${m === week.member ? ' on' : ''}" data-wm="${esc(m)}" title="${esc(tip)}">${esc(m)} <b>${mine.length}</b></button>`; }).join('')}
+    </div></div>`;
+  html += days.map((d, i) => {
+    const items = list.filter((t) => t.date === d).sort((a, b) => a.member.localeCompare(b.member) || a.id - b.id);
+    return `<div class="card day"><h3>${DAYS[i]} <span class="hint">${fmtDate(d)}, ${items.length} task${items.length === 1 ? '' : 's'}</span></h3>
+      ${items.length ? `<div style="overflow-x:auto"><table class="ro fixed"><tbody>${items.map((t) => `<tr>
+        ${week.member ? '' : `<td class="mem">${esc(t.member)}</td>`}
+        <td>${esc(t.task)}</td>
+        <td class="st"><span class="badge ${cls(t.status)}">${esc(t.status)}</span></td>
+        <td class="muted nt">${esc(t.notes)}</td></tr>`).join('')}</tbody></table></div>`
+      : '<p class="hint" style="margin:0">No tasks logged.</p>'}</div>`;
+  }).join('');
+  $('#wBody').innerHTML = html;
+}
+
+function listHTML(v) {
+  const title = v.kind === 'member' ? v.name : 'All Tasks';
+  const sub = v.kind === 'member' ? 'Every task this team member has added. Edit anything inline.' : 'Everyone\'s tasks in one place. Add yours below.';
+  const memberSel = v.kind === 'member'
+    ? `<input value="${esc(v.name)}" disabled aria-label="Team member">`
+    : `<select name="member" aria-label="Team member" required><option value="">Team member</option>${S.members.map((m) => `<option ${m === me() ? 'selected' : ''}>${esc(m)}</option>`).join('')}</select>`;
+  return `
+    ${!me() ? `<div class="banner"><b>First time here?</b> Pick your name at the top right so new tasks are added under you.</div>` : ''}
+    <h2>${esc(title)}</h2><p class="sub">${sub}</p>
+    <div class="chips" id="chips"></div>
+    <form class="card add" id="addForm" autocomplete="off">
+      <input type="date" name="date" value="${today()}" required aria-label="Date">
+      ${memberSel}
+      <input name="task" placeholder="Task name" maxlength="500" required class="wide" aria-label="Task name">
+      <select name="status" aria-label="Status">${S.statuses.map((s) => `<option>${esc(s)}</option>`).join('')}</select>
+      <input name="notes" placeholder="Notes / Blockers (optional)" maxlength="2000" class="wide" aria-label="Notes">
+      <button class="btn">Add task</button>
+    </form>
+    <div class="tools">
+      <input id="q" type="search" placeholder="Search tasks and notes" aria-label="Search">
+      <select id="fs" aria-label="Filter by status"><option value="">All statuses</option>${S.statuses.map((s) => `<option>${esc(s)}</option>`).join('')}</select>
+      <label class="range">From <input type="date" id="fFrom" value="${filters.from}" aria-label="From date"></label>
+      <label class="range">To <input type="date" id="fTo" value="${filters.to}" aria-label="To date"></label>
+      <button type="button" class="btn ghost" id="fClear">Clear dates</button>
+    </div>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Date</th>${v.kind === 'all' ? '<th>Team Member</th>' : ''}<th>Task Name</th><th>Status</th><th>Notes / Blockers</th><th></th></tr></thead>
+      <tbody id="rows"></tbody></table></div>`;
+}
+
+function bindList(v) {
+  $('#addForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const f = new FormData(e.target);
+    const body = { date: f.get('date'), member: v.kind === 'member' ? v.name : f.get('member'),
+                   task: f.get('task'), status: f.get('status'), notes: f.get('notes') };
+    try {
+      const t = await db.addTask(body);
+      putTask(t);
+      e.target.task.value = ''; e.target.notes.value = '';
+      e.target.task.focus();
+      toast('Task added for ' + t.member);
+      renderNav(); renderTable(v);
+    } catch (err) { toast(err.message, true); }
+  });
+  $('#q').addEventListener('input', (e) => { filters.q = e.target.value.toLowerCase(); renderTable(v); });
+  $('#fs').addEventListener('change', (e) => { filters.status = e.target.value; renderTable(v); });
+  $('#fFrom').addEventListener('change', (e) => { filters.from = e.target.value; renderTable(v); });
+  $('#fTo').addEventListener('change', (e) => { filters.to = e.target.value; renderTable(v); });
+  $('#fClear').addEventListener('click', () => { filters.from = filters.to = ''; $('#fFrom').value = $('#fTo').value = ''; renderTable(v); });
+  $('#rows').addEventListener('change', async (e) => {
+    const tr = e.target.closest('tr'); if (!tr) return;
+    const field = e.target.dataset.f;
+    try {
+      const t = await db.updateTask(Number(tr.dataset.id), { [field]: e.target.value });
+      putTask(t);
+      if (field === 'status') { e.target.className = 's ' + cls(t.status); renderNav(); renderChips(v); }
+      toast('Saved');
+    } catch (err) { toast(err.message, true); refresh(); }
+  });
+  $('#rows').addEventListener('click', async (e) => {
+    if (!e.target.classList.contains('del')) return;
+    const tr = e.target.closest('tr');
+    const t = S.tasks.find((x) => x.id === Number(tr.dataset.id));
+    if (!confirm(`Delete this task?\n\n${t.task}`)) return;
+    try {
+      await db.deleteTask(t.id);
+      S.tasks = S.tasks.filter((x) => x.id !== t.id);
+      toast('Task deleted'); renderNav(); renderTable(v);
+    } catch (err) { toast(err.message, true); }
+  });
+  $('#chips').addEventListener('click', (e) => {
+    const c = e.target.closest('.chip'); if (!c) return;
+    filters.status = filters.status === c.dataset.s ? '' : c.dataset.s;
+    $('#fs').value = filters.status; renderTable(v);
+  });
+}
+
+function scoped(v) {   // member + date range; chips and table both use this so the counts match the rows
+  return S.tasks.filter((t) => (v.kind !== 'member' || t.member === v.name) &&
+    (!filters.from || t.date >= filters.from) && (!filters.to || t.date <= filters.to));
+}
+
+function renderChips(v) {
+  const list = scoped(v);
+  const chip = (label, n, s) => `<button class="chip ${filters.status === s ? 'on' : ''}" data-s="${esc(s)}"><b>${n}</b><span>${esc(label)}</span></button>`;
+  $('#chips').innerHTML = chip('Total', list.length, '') +
+    S.statuses.map((s) => chip(s, list.filter((t) => t.status === s).length, s)).join('');
+}
+
+function renderTable(v) {
+  renderChips(v);
+  const rows = scoped(v)
+    .filter((t) => !filters.status || t.status === filters.status)
+    .filter((t) => !filters.q || (t.task + ' ' + t.notes + ' ' + t.member).toLowerCase().includes(filters.q))
+    .sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
+  const cols = v.kind === 'all' ? 6 : 5;
+  $('#rows').innerHTML = rows.length ? rows.map((t) => `
+    <tr data-id="${t.id}">
+      <td class="date"><input type="date" data-f="date" value="${esc(t.date)}" title="${fmtDate(t.date)}" aria-label="Date"></td>
+      ${v.kind === 'all' ? `<td class="mem"><a href="#m/${encodeURIComponent(t.member)}" style="color:inherit">${esc(t.member)}</a></td>` : ''}
+      <td><input data-f="task" value="${esc(t.task)}" maxlength="500" aria-label="Task name"></td>
+      <td class="st"><select data-f="status" class="s ${cls(t.status)}" aria-label="Status">${S.statuses.map((s) => `<option ${s === t.status ? 'selected' : ''}>${esc(s)}</option>`).join('')}</select></td>
+      <td><input data-f="notes" value="${esc(t.notes)}" maxlength="2000" placeholder="Add a note" aria-label="Notes"></td>
+      <td class="x"><button class="del" title="Delete task" aria-label="Delete task">&times;</button></td>
+    </tr>`).join('')
+    : `<tr><td colspan="${cols}" class="empty">${S.tasks.length ? 'No tasks match.' : 'No tasks yet. Add the first one above.'}</td></tr>`;
+}
+
+// ---------- settings ----------
+function settingsHTML() {
+  return `
+    <h2>Settings and import</h2><p class="sub">Manage the team list, bring in tasks from your Excel sheet, or download everything.</p>
+    <div class="card">
+      <h3>Team members</h3>
+      <p class="hint">Removing someone hides them from the lists. Their tasks stay on All Tasks.</p>
+      <div class="members" id="memberList"></div>
+      <form class="row" id="memberForm"><input name="name" placeholder="New member name" maxlength="80" required><button class="btn">Add member</button></form>
+    </div>
+    <div class="card">
+      <h3>Import from Excel</h3>
+      <p class="hint">In your sheet, select the rows with columns in this order: Date, Team Member, Task Name, Status, Notes / Blockers. Copy, paste below, then Import. A header row is skipped. New names are added to the team automatically.</p>
+      <textarea id="paste" placeholder="09-Nov-2026	Atif Shahzad	website audit report	Completed	"></textarea>
+      <div class="row" style="margin-top:8px"><button class="btn" id="importBtn">Import</button><span class="hint" id="importInfo"></span></div>
+    </div>
+    <div class="card">
+      <h3>Download</h3>
+      <p class="hint">A CSV of every task that opens in Excel.</p>
+      <button class="btn ghost" id="csvBtn">Download all tasks (CSV)</button>
+    </div>`;
+}
+
+function renderMembersList() {
+  $('#memberList').innerHTML = S.members.map((m) =>
+    `<span>${esc(m)} <button data-m="${esc(m)}" title="Remove ${esc(m)}" aria-label="Remove ${esc(m)}">&times;</button></span>`).join('');
+}
+
+function parseDate(s) {
+  s = s.trim(); let m;
+  const iso = (y, mo, d) => {
+    y = Number(y); if (y < 100) y += 2000;
+    const out = `${y}-${String(mo).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    return isNaN(Date.parse(out)) ? null : out;
+  };
+  if ((m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/))) return iso(m[1], m[2], m[3]);
+  if ((m = s.match(/^(\d{1,2})[-\s/]([A-Za-z]{3})[A-Za-z]*[-\s/,]+(\d{2,4})$/))) {
+    const mo = MONTHS.findIndex((x) => x.toLowerCase() === m[2].toLowerCase()) + 1;
+    return mo ? iso(m[3], mo, m[1]) : null;
+  }
+  if ((m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/))) return iso(m[3], m[1], m[2]); // US m/d/y, as Excel copies it
+  return null;
+}
+
+function parsePaste(text) {
+  const rows = [], bad = [];
+  text.split(/\r?\n/).forEach((line, i) => {
+    if (!line.trim()) return;
+    const [d = '', member = '', task = '', status = '', notes = ''] = line.split('\t');
+    if (i === 0 && /^date$/i.test(d.trim())) return;
+    const date = parseDate(d);
+    const st = S.statuses.find((s) => s.toLowerCase() === status.trim().toLowerCase()) || 'Not Started';
+    if (!date || !member.trim() || !task.trim()) { bad.push(i + 1); return; }
+    rows.push({ date, member: member.trim(), task: task.trim(), status: st, notes: notes.trim() });
+  });
+  return { rows, bad };
+}
+
+function bindSettings() {
+  $('#memberForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    try { S = await db.addMember(e.target.name.value); e.target.reset(); toast('Member added'); render(); }
+    catch (err) { toast(err.message, true); }
+  });
+  $('#memberList').addEventListener('click', async (e) => {
+    const m = e.target.dataset.m; if (!m) return;
+    if (!confirm(`Remove ${m} from the team list? Their tasks are kept.`)) return;
+    try { S = await db.removeMember(m); toast('Member removed'); render(); }
+    catch (err) { toast(err.message, true); }
+  });
+  $('#paste').addEventListener('input', (e) => {
+    const { rows, bad } = parsePaste(e.target.value);
+    $('#importInfo').textContent = `${rows.length} task(s) ready` + (bad.length ? `. Skipping line(s) ${bad.join(', ')} (missing date, name or task).` : '.');
+  });
+  $('#importBtn').addEventListener('click', async () => {
+    const { rows } = parsePaste($('#paste').value);
+    if (!rows.length) return toast('Paste some rows first.', true);
+    try { const r = await db.importRows(rows); S = r; $('#paste').value = ''; $('#importInfo').textContent = '';
+          toast(`Imported ${r.added} task(s)`); render(); }
+    catch (err) { toast(err.message, true); }
+  });
+  $('#csvBtn').addEventListener('click', () => {
+    const q = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+    const lines = [['Date', 'Team Member', 'Task Name', 'Status', 'Notes / Blockers'].map(q).join(',')]
+      .concat([...S.tasks].sort((a, b) => a.date.localeCompare(b.date) || a.id - b.id)
+        .map((t) => [fmtDate(t.date), t.member, t.task, t.status, t.notes].map(q).join(',')));
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([String.fromCharCode(0xFEFF) + lines.join('\r\n')], { type: 'text/csv' }));
+    a.download = `team-tasks-${today()}.csv`; a.click();
+  });
+}
+
+// ---------- boot ----------
+function render() { renderHeader(); renderNav(); renderMain(); }
+// Redraw for background changes, but never while someone is typing in the table or the import box.
+let dirty = false, redrawTimer;
+function softRender() { dirty = true; clearTimeout(redrawTimer); redrawTimer = setTimeout(flush, 300); }
+function flush() {
+  const a = document.activeElement;
+  if (a && a.closest && a.closest('#rows, textarea')) return;   // tried again when focus leaves
+  if (dirty) { dirty = false; render(); }
+}
+document.addEventListener('focusout', () => setTimeout(flush, 0));
+
+async function refresh() {
+  try { S = await db.state(); softRender(); }
+  catch (err) {
+    const { data } = await sb.auth.getSession();
+    if (!data.session) return showLogin();
+    toast('Cannot reach the tracker. Check your internet connection.', true);
+  }
+}
+
+// Live updates: each change arrives as one row and is applied in place, so nobody re-downloads the whole list.
+let live = false, started = false;
+function applyTaskChange(p) {
+  if (p.eventType === 'DELETE') S.tasks = S.tasks.filter((t) => t.id !== p.old.id);
+  else putTask(p.new);
+  softRender();
+}
+function start() {
+  refresh();
+  if (started) return;
+  started = true;
+  let first = true;
+  sb.channel('tracker')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, applyTaskChange)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'members' }, async () => {
+      try { S.members = await loadMembers(); softRender(); } catch {}
+    })
+    .subscribe((status) => {
+      live = status === 'SUBSCRIBED';
+      if (live && !first) refresh();   // reconnected: catch up on anything missed while offline
+      if (live) first = false;
+    });
+  // If the office network blocks live updates, catch up whenever someone comes back to the tab.
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && !live) refresh(); });
+}
+
+function showLogin() {
+  currentView = null;
+  $('#nav').innerHTML = '';
+  $('#main').innerHTML = `<form class="card login" id="loginForm">
+      <h2>Team Task Tracker</h2><p class="sub" style="margin:0">Enter the team password to continue.</p>
+      <input type="password" name="pw" required autocomplete="current-password" aria-label="Team password" placeholder="Team password">
+      <button class="btn">Sign in</button></form>`;
+  $('#loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const { error } = await sb.auth.signInWithPassword({ email: TEAM_EMAIL, password: e.target.pw.value });
+    if (error) return toast(error.status === 400 ? 'Wrong password.' : error.message, true);
+    start();
+  });
+}
+
+$('#me').addEventListener('change', (e) => { store.set('tt_me', e.target.value); currentView = null; render(); });
+window.addEventListener('hashchange', () => { if (started) render(); });
+if (!configured) $('#main').innerHTML = '<div class="card"><h2>Setup not finished</h2><p>Open index.html and paste the Supabase project URL and anon key at the top of the script. SETUP.txt has the steps.</p></div>';
+else sb.auth.getSession().then(({ data }) => (data.session ? start() : showLogin()));
+</script>
+</body>
+</html>
