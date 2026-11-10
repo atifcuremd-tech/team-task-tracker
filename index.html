@@ -145,6 +145,7 @@ function toast(msg, err) {
 const SUPABASE_URL = 'https://ybynpkunqhygujfzbidc.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlieW5wa3VucWh5Z3VqZnpiaWRjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQzMDY5MjMsImV4cCI6MjEwOTg4MjkyM30.TyfdxboPGwk668bVTAMXQMJeblRpgGoZ5dYsefCd4TA';
 const TEAM_EMAIL = 'tasktracker@curemd.com';   // the one shared login; must match the email in setup.sql
+const ADMIN_EMAIL = 'trackeradmin@curemd.com'; // the main admin login (own password); must match admin.sql
 const STATUSES = ['Not Started', 'In Progress', 'Completed', 'Blocked'];
 const configured = SUPABASE_URL.startsWith('https://');
 const sb = configured ? supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
@@ -175,7 +176,8 @@ const db = {
       check(error); tasks.push(...data);
       if (data.length < 1000) break;
     }
-    return { members: await loadMembers(), statuses: STATUSES, tasks };
+    const { data: { session } } = await sb.auth.getSession();
+    return { members: await loadMembers(), statuses: STATUSES, tasks, admin: session?.user.email === ADMIN_EMAIL };
   },
   async addTask(t) { const { data, error } = await sb.from('tasks').insert(clean(t)).select().single(); check(error); return data; },
   async updateTask(id, patch) {
@@ -204,7 +206,7 @@ const db = {
 
 function view() {
   const h = decodeURIComponent(location.hash.slice(1));
-  if (h === 'settings') return { kind: 'settings' };
+  if (h === 'settings' && S.admin) return { kind: 'settings' };   // only the main admin sees Settings
   if (h === 'week') return { kind: 'week' };
   if (h.startsWith('m/')) return { kind: 'member', name: h.slice(2) };
   return { kind: 'all' };
@@ -229,7 +231,7 @@ function renderNav() {
   html += '<div class="sec">Team members (total tasks)</div>';
   html += S.members.map((m) => link('#m/' + encodeURIComponent(m), m, total(m),
     v.kind === 'member' && v.name === m, m === me() ? '<span class="me">YOU</span>' : '')).join('');
-  html += '<div class="sec">Admin</div>' + link('#settings', 'Settings and import', null, v.kind === 'settings');
+  if (S.admin) html += '<div class="sec">Admin</div>' + link('#settings', 'Settings and import', null, v.kind === 'settings');
   $('#nav').innerHTML = html;
 }
 
@@ -567,7 +569,9 @@ function showLogin() {
       <button class="btn">Sign in</button></form>`;
   $('#loginForm').addEventListener('submit', async (e) => {
     e.preventDefault();
-    const { error } = await sb.auth.signInWithPassword({ email: TEAM_EMAIL, password: e.target.pw.value });
+    const password = e.target.pw.value;   // the team password, or the admin password for the main admin
+    let { error } = await sb.auth.signInWithPassword({ email: TEAM_EMAIL, password });
+    if (error && error.status === 400) ({ error } = await sb.auth.signInWithPassword({ email: ADMIN_EMAIL, password }));
     if (error) return toast(error.status === 400 ? 'Wrong password.' : error.message, true);
     start();
   });
