@@ -20,8 +20,15 @@
   button, input, select, textarea { font: inherit; color: inherit; }
   header { background: var(--blue); color: #fff; display: flex; align-items: center; gap: 16px;
     padding: 10px 20px; position: sticky; top: 0; z-index: 5; }
-  header h1 { font-size: 19px; margin: 0; font-weight: 700; flex: 1; }
-  #who { font-size: 14px; display: flex; align-items: center; gap: 10px; }
+  header h1 { font-size: 19px; margin: 0; font-weight: 700; white-space: nowrap; }
+  #who { font-size: 14px; display: flex; align-items: center; gap: 10px; margin-left: auto; }
+  .navbtn { background: none; border: 0; color: #fff; width: 34px; height: 34px; border-radius: 6px; cursor: pointer; display: grid; place-items: center; padding: 0; margin-left: -6px; }
+  .navbtn:hover { background: rgba(255,255,255,.15); }
+  #tabs { display: flex; gap: 4px; overflow-x: auto; }
+  #tabs:empty, body.signedout #tabs, body.signedout .navbtn { display: none; }
+  .tab { color: #fff; text-decoration: none; padding: 6px 12px; border-radius: 6px; font-weight: 600; font-size: 14.5px; white-space: nowrap; opacity: .85; }
+  .tab:hover { background: rgba(255,255,255,.15); opacity: 1; }
+  .tab.on { background: #fff; color: var(--blue); opacity: 1; }
   .out { background: transparent; border: 1px solid rgba(255,255,255,.7); color: #fff; border-radius: 6px; padding: 4px 12px; font-weight: 600; cursor: pointer; }
   .out:hover { background: rgba(255,255,255,.15); }
   td input:disabled, td select:disabled { opacity: 1; cursor: default; }
@@ -38,10 +45,8 @@
   nav a.on { background: var(--blue); color: #fff; }
   nav a .n { font-size: 12px; background: var(--ns-bg); color: var(--muted); border-radius: 10px; padding: 0 7px; min-width: 22px; text-align: center; }
   nav a.on .n { background: rgba(255,255,255,.25); color: #fff; }
-  .layout.collapsed { grid-template-columns: 170px 1fr; }
-  .layout.collapsed nav .more { display: none; }
-  .navtoggle { display: block; width: 100%; text-align: left; border: 0; background: none; color: var(--muted); font-size: 13px; font-weight: 600; padding: 7px 10px; margin-top: 4px; border-radius: 6px; cursor: pointer; white-space: nowrap; }
-  .navtoggle:hover { background: var(--blue-tint); color: var(--blue); }
+  .layout.collapsed { grid-template-columns: 1fr; }
+  .layout.collapsed nav { display: none; }
   nav a .me { font-size: 11px; color: var(--amber); font-weight: 700; margin-left: 6px; }
   main { padding: 22px 26px; min-width: 0; }
   h2 { margin: 0 0 4px; font-size: 24px; }
@@ -109,7 +114,7 @@
   button:disabled { opacity: .4; cursor: default; }
   @media (max-width: 900px) {
     .layout, .layout.collapsed { grid-template-columns: 1fr; }
-    nav > div { display: contents; }
+    #tabs { order: 3; flex-basis: 100%; }
     nav { position: static; max-height: none; display: flex; overflow-x: auto; gap: 4px; padding: 8px; border-right: 0; border-bottom: 1px solid var(--line); }
     nav .sec { display: none; } nav a { white-space: nowrap; }
     .add { grid-template-columns: 1fr 1fr; } .add .wide { grid-column: 1 / -1; }
@@ -119,9 +124,11 @@
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 </head>
-<body>
+<body class="signedout">
 <header>
+  <button type="button" class="navbtn" id="navBtn" aria-label="Show or hide the sidebar" title="Show or hide the sidebar"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/></svg></button>
   <h1>Team Task Tracker</h1>
+  <div id="tabs"></div>
   <span id="who"></span>
 </header>
 <div class="layout">
@@ -251,21 +258,21 @@ function renderNav() {
   const thisWeek = weekSoFar();
   const shut = navCollapsed();
   document.querySelector('.layout').classList.toggle('collapsed', shut);
-  let html = '<div class="top">' + link('#all', 'All Tasks', S.tasks.length, v.kind === 'all');
+  $('#navBtn').setAttribute('aria-expanded', String(!shut));
+  const tab = (href, label, on) => `<a href="${href}" class="tab${on ? ' on' : ''}">${esc(label)}</a>`;
+  $('#tabs').innerHTML = shut ? tab('#all', 'All Tasks', v.kind === 'all') + tab('#week', 'This Week', v.kind === 'week') +
+    tab('#m/' + encodeURIComponent(me()), 'My Tasks', v.kind === 'member' && v.name === me()) : '';
+  let html = link('#all', 'All Tasks', S.tasks.length, v.kind === 'all');
   html += link('#week', 'This Week', S.tasks.filter((t) => thisWeek.includes(t.date)).length, v.kind === 'week');
   if (me() && S.members.includes(me())) html += link('#m/' + encodeURIComponent(me()), 'My Tasks', total(me()), false);
-  html += `<button type="button" class="navtoggle" id="navToggle" aria-expanded="${!shut}">${shut ? '&#9656; Expand' : '&#9666; Collapse'}</button></div><div class="more">`;
   html += '<div class="sec">Team members (total tasks)</div>';
   html += S.members.map((m) => link('#m/' + encodeURIComponent(m), m, total(m),
     v.kind === 'member' && v.name === m, m === me() ? '<span class="me">YOU</span>' : '')).join('');
   if (S.admin) html += '<div class="sec">Admin</div>' + link('#settings', 'Settings and import', null, v.kind === 'settings');
-  $('#nav').innerHTML = html + '</div>';
+  $('#nav').innerHTML = html;
 }
 const navCollapsed = () => store.get('tt_nav') === '1';   // remembered per browser
-$('#nav').addEventListener('click', (e) => {
-  if (e.target.id !== 'navToggle') return;
-  store.set('tt_nav', navCollapsed() ? '' : '1'); renderNav();
-});
+$('#navBtn').addEventListener('click', () => { store.set('tt_nav', navCollapsed() ? '' : '1'); renderNav(); });
 
 function renderMain() {
   const v = view();
@@ -549,6 +556,7 @@ function bindSettings() {
 
 // ---------- boot ----------
 function render() {
+  document.body.classList.toggle('signedout', !signedIn());   // hides the sidebar button and tabs on the sign in screen
   if (!signedIn()) return showPick();   // also catches a name the admin has since removed
   renderHeader(); renderNav(); renderMain();
 }
