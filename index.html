@@ -21,8 +21,12 @@
   header { background: var(--blue); color: #fff; display: flex; align-items: center; gap: 16px;
     padding: 10px 20px; position: sticky; top: 0; z-index: 5; }
   header h1 { font-size: 19px; margin: 0; font-weight: 700; flex: 1; }
-  header label { font-size: 14px; opacity: .9; }
-  header select { background: #fff; border: 0; border-radius: 6px; padding: 5px 8px; min-width: 170px; color: var(--text); }
+  #who { font-size: 14px; display: flex; align-items: center; gap: 10px; }
+  .out { background: transparent; border: 1px solid rgba(255,255,255,.7); color: #fff; border-radius: 6px; padding: 4px 12px; font-weight: 600; cursor: pointer; }
+  .out:hover { background: rgba(255,255,255,.15); }
+  td input:disabled, td select:disabled { opacity: 1; cursor: default; }
+  td input:disabled { color: inherit; } td select:disabled { appearance: none; }
+  td input:disabled:hover { border-color: transparent; background: transparent; }
   .layout { display: grid; grid-template-columns: 240px 1fr; min-height: calc(100vh - 52px); }
   nav { background: var(--card); border-right: 1px solid var(--line); padding: 14px 10px; overflow-y: auto;
     max-height: calc(100vh - 52px); position: sticky; top: 52px; }
@@ -113,8 +117,7 @@
 <body>
 <header>
   <h1>Team Task Tracker</h1>
-  <label for="me">You are</label>
-  <select id="me"></select>
+  <span id="who"></span>
 </header>
 <div class="layout">
   <nav id="nav"></nav>
@@ -135,6 +138,10 @@ const fmtDate = (iso) => { const [y, m, d] = iso.split('-'); return `${d}-${MONT
 const store = { get: (k) => { try { return localStorage.getItem(k) || ''; } catch { return ''; } },
                 set: (k, v) => { try { localStorage.setItem(k, v); } catch {} } };
 const me = () => store.get('tt_me');
+const signedIn = () => S.members.includes(me());
+// Own tasks only: everyone sees every task, but only the owner (or the admin) can change one.
+// ponytail: enforced on screen only; the team shares one login, so real per person locks need personal accounts
+const canEdit = (t) => S.admin || t.member === me();
 
 function toast(msg, err) {
   const t = $('#toast'); t.textContent = msg; t.className = 'toast show' + (err ? ' err' : '');
@@ -214,9 +221,21 @@ function view() {
 
 // ---------- rendering ----------
 function renderHeader() {
-  const sel = $('#me');
-  sel.innerHTML = '<option value="">Choose your name</option>' +
-    S.members.map((m) => `<option ${m === me() ? 'selected' : ''}>${esc(m)}</option>`).join('');
+  $('#who').innerHTML = `<span>Signed in as <b>${esc(me())}</b>${S.admin ? ' (admin)' : ''}</span>
+    <button type="button" class="out" id="signOut">Sign out</button>`;
+}
+
+function showPick() {   // sign in step: choose your name
+  $('#who').innerHTML = ''; $('#nav').innerHTML = '';
+  if (currentView === 'pick') return;   // background refreshes must not reset a half made choice
+  currentView = 'pick';
+  $('#main').innerHTML = `<form class="card login" id="pickForm">
+      <h2>Sign in</h2><p class="sub" style="margin:0">Choose your name. Tasks you add are saved under it, and you can edit only your own tasks.</p>
+      <select name="me" required aria-label="Your name"><option value="">Choose your name</option>${S.members.map((m) => `<option>${esc(m)}</option>`).join('')}</select>
+      <button class="btn">Sign in</button></form>`;
+  $('#pickForm').addEventListener('submit', (e) => {
+    e.preventDefault(); store.set('tt_me', e.target.me.value); currentView = null; location.hash = ''; render();
+  });
 }
 
 function renderNav() {
@@ -314,22 +333,24 @@ function renderWeek() {
 
 function listHTML(v) {
   const title = v.kind === 'member' ? v.name : 'All Tasks';
-  const sub = v.kind === 'member' ? 'Every task this team member has added. Edit anything inline.' : 'Everyone\'s tasks in one place. Add yours below.';
-  const memberSel = v.kind === 'member'
-    ? `<input value="${esc(v.name)}" disabled aria-label="Team member">`
+  const own = v.kind !== 'member' || v.name === me();
+  const sub = (v.kind === 'all' ? 'Everyone\'s tasks in one place. Add yours below.'
+    : own ? 'Every task you have added. Edit anything inline.' : 'Every task this team member has added.') +
+    (S.admin ? ' As admin you can edit any task.' : own ? '' : ' Only they can change these.');
+  const memberSel = v.kind === 'member' || !S.admin
+    ? `<input value="${esc(v.kind === 'member' ? v.name : me())}" disabled aria-label="Team member">`
     : `<select name="member" aria-label="Team member" required><option value="">Team member</option>${S.members.map((m) => `<option ${m === me() ? 'selected' : ''}>${esc(m)}</option>`).join('')}</select>`;
   return `
-    ${!me() ? `<div class="banner"><b>First time here?</b> Pick your name at the top right so new tasks are added under you.</div>` : ''}
     <h2>${esc(title)}</h2><p class="sub">${sub}</p>
     <div class="chips" id="chips"></div>
-    <form class="card add" id="addForm" autocomplete="off">
+    ${S.admin || own ? `<form class="card add" id="addForm" autocomplete="off">
       <input type="date" name="date" value="${today()}" required aria-label="Date">
       ${memberSel}
       <input name="task" placeholder="Task name" maxlength="500" required class="wide" aria-label="Task name">
       <select name="status" aria-label="Status">${S.statuses.map((s) => `<option>${esc(s)}</option>`).join('')}</select>
       <input name="notes" placeholder="Notes / Blockers (optional)" maxlength="2000" class="wide" aria-label="Notes">
       <button class="btn">Add task</button>
-    </form>
+    </form>` : ''}
     <div class="tools">
       <input id="q" type="search" placeholder="Search tasks and notes" aria-label="Search">
       <select id="fs" aria-label="Filter by status"><option value="">All statuses</option>${S.statuses.map((s) => `<option>${esc(s)}</option>`).join('')}</select>
@@ -343,10 +364,10 @@ function listHTML(v) {
 }
 
 function bindList(v) {
-  $('#addForm').addEventListener('submit', async (e) => {
+  $('#addForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const f = new FormData(e.target);
-    const body = { date: f.get('date'), member: v.kind === 'member' ? v.name : f.get('member'),
+    const body = { date: f.get('date'), member: v.kind === 'member' ? v.name : S.admin ? f.get('member') : me(),
                    task: f.get('task'), status: f.get('status'), notes: f.get('notes') };
     try {
       const t = await db.addTask(body);
@@ -409,15 +430,15 @@ function renderTable(v) {
     .filter((t) => !filters.q || (t.task + ' ' + t.notes + ' ' + t.member).toLowerCase().includes(filters.q))
     .sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
   const cols = v.kind === 'all' ? 6 : 5;
-  $('#rows').innerHTML = rows.length ? rows.map((t) => `
+  $('#rows').innerHTML = rows.length ? rows.map((t) => { const ro = canEdit(t) ? '' : ' disabled'; return `
     <tr data-id="${t.id}">
-      <td class="date"><input type="date" data-f="date" value="${esc(t.date)}" title="${fmtDate(t.date)}" aria-label="Date"></td>
+      <td class="date"><input type="date" data-f="date" value="${esc(t.date)}" title="${fmtDate(t.date)}" aria-label="Date"${ro}></td>
       ${v.kind === 'all' ? `<td class="mem"><a href="#m/${encodeURIComponent(t.member)}" style="color:inherit">${esc(t.member)}</a></td>` : ''}
-      <td><input data-f="task" value="${esc(t.task)}" maxlength="500" aria-label="Task name"></td>
-      <td class="st"><select data-f="status" class="s ${cls(t.status)}" aria-label="Status">${S.statuses.map((s) => `<option ${s === t.status ? 'selected' : ''}>${esc(s)}</option>`).join('')}</select></td>
-      <td><input data-f="notes" value="${esc(t.notes)}" maxlength="2000" placeholder="Add a note" aria-label="Notes"></td>
-      <td class="x"><button class="del" title="Delete task" aria-label="Delete task">&times;</button></td>
-    </tr>`).join('')
+      <td><input data-f="task" value="${esc(t.task)}" maxlength="500" aria-label="Task name"${ro}></td>
+      <td class="st"><select data-f="status" class="s ${cls(t.status)}" aria-label="Status"${ro}>${S.statuses.map((s) => `<option ${s === t.status ? 'selected' : ''}>${esc(s)}</option>`).join('')}</select></td>
+      <td><input data-f="notes" value="${esc(t.notes)}" maxlength="2000" placeholder="${ro ? '' : 'Add a note'}" aria-label="Notes"${ro}></td>
+      <td class="x">${ro ? '' : '<button class="del" title="Delete task" aria-label="Delete task">&times;</button>'}</td>
+    </tr>`; }).join('')
     : `<tr><td colspan="${cols}" class="empty">${S.tasks.length ? 'No tasks match.' : 'No tasks yet. Add the first one above.'}</td></tr>`;
 }
 
@@ -514,7 +535,10 @@ function bindSettings() {
 }
 
 // ---------- boot ----------
-function render() { renderHeader(); renderNav(); renderMain(); }
+function render() {
+  if (!signedIn()) return showPick();   // also catches a name the admin has since removed
+  renderHeader(); renderNav(); renderMain();
+}
 // Redraw for background changes, but never while someone is typing in the table or the import box.
 let dirty = false, redrawTimer;
 function softRender() { dirty = true; clearTimeout(redrawTimer); redrawTimer = setTimeout(flush, 300); }
@@ -562,7 +586,7 @@ function start() {
 
 function showLogin() {
   currentView = null;
-  $('#nav').innerHTML = '';
+  $('#nav').innerHTML = ''; $('#who').innerHTML = '';
   $('#main').innerHTML = `<form class="card login" id="loginForm">
       <h2>Team Task Tracker</h2><p class="sub" style="margin:0">Enter the team password to continue.</p>
       <input type="password" name="pw" required autocomplete="current-password" aria-label="Team password" placeholder="Team password">
@@ -577,7 +601,12 @@ function showLogin() {
   });
 }
 
-$('#me').addEventListener('change', (e) => { store.set('tt_me', e.target.value); currentView = null; render(); });
+$('#who').addEventListener('click', async (e) => {
+  if (e.target.id !== 'signOut') return;
+  store.set('tt_me', '');
+  await sb.auth.signOut();               // ends the shared password session on this browser
+  location.replace(location.pathname);   // fresh start: back to the password screen, live updates closed
+});
 window.addEventListener('hashchange', () => { if (started) render(); });
 if (!configured) $('#main').innerHTML = '<div class="card"><h2>Setup not finished</h2><p>Open index.html and paste the Supabase project URL and anon key at the top of the script. SETUP.txt has the steps.</p></div>';
 else sb.auth.getSession().then(({ data }) => (data.session ? start() : showLogin()));
