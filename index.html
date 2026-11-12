@@ -3,712 +3,634 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Dev Issue Tracker</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%230F6CBD'/%3E%3Cpath d='M11.5 5.5A4 4 0 1 0 12 9' stroke='white' stroke-width='2' fill='none'/%3E%3Cpath d='M12.5 3v3h-3' stroke='white' stroke-width='2' fill='none'/%3E%3C/svg%3E">
+<title>Team Task Tracker</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%230F6CBD'/%3E%3Cpath d='M4 8l3 3 5-6' stroke='white' stroke-width='2' fill='none'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
-    --blue: #0F6CBD; --blue-dark: #0B4F8A; --blue-tint: #E8F1FA; --amber: #FFAA00; --amber-bg: #FFF3D6; --amber-text: #8A5300;
+    --blue: #0F6CBD; --blue-dark: #0B4F8A; --blue-tint: #E8F1FA; --amber: #FFAA00;
     --bg: #F5F7FA; --card: #FFFFFF; --text: #1F2933; --muted: #6B7785; --line: #E1E6EC;
-    --grey-bg: #EEF1F4; --ok: #1E7B34; --ok-bg: #E3F4E7; --bad: #B42318; --bad-bg: #FDE8E7; --ip: #0B4F8A;
+    --ns: #6B7785; --ns-bg: #EEF1F4; --ip: #9A5B00; --ip-bg: #FFF3D6;
+    --ok: #1E7B34; --ok-bg: #E3F4E7; --bl: #B42318; --bl-bg: #FDE8E7;
   }
   * { box-sizing: border-box; }
-  body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.45 "Source Sans 3", system-ui, -apple-system, "Segoe UI", Arial, sans-serif; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+    font: 15px/1.45 "Source Sans 3", system-ui, -apple-system, "Segoe UI", Arial, sans-serif; }
   button, input, select, textarea { font: inherit; color: inherit; }
-  header { background: var(--blue); color: #fff; display: flex; align-items: center; gap: 16px; padding: 10px 20px; position: sticky; top: 0; z-index: 5; flex-wrap: wrap; }
+  header { background: var(--blue); color: #fff; display: flex; align-items: center; gap: 16px;
+    padding: 10px 20px; position: sticky; top: 0; z-index: 5; }
   header h1 { font-size: 19px; margin: 0; font-weight: 700; white-space: nowrap; }
+  #who { font-size: 14px; display: flex; align-items: center; gap: 10px; margin-left: auto; }
+  .navbtn { background: none; border: 0; color: #fff; width: 34px; height: 34px; border-radius: 6px; cursor: pointer; display: grid; place-items: center; padding: 0; margin-left: -6px; }
+  .navbtn:hover { background: rgba(255,255,255,.15); }
   #tabs { display: flex; gap: 4px; overflow-x: auto; }
+  #tabs:empty, body.signedout #tabs, body.signedout .navbtn { display: none; }
   .tab { color: #fff; text-decoration: none; padding: 6px 12px; border-radius: 6px; font-weight: 600; font-size: 14.5px; white-space: nowrap; opacity: .85; }
   .tab:hover { background: rgba(255,255,255,.15); opacity: 1; }
   .tab.on { background: #fff; color: var(--blue); opacity: 1; }
-  #who { font-size: 14px; display: flex; align-items: center; gap: 10px; margin-left: auto; }
   .out { background: transparent; border: 1px solid rgba(255,255,255,.7); color: #fff; border-radius: 6px; padding: 4px 12px; font-weight: 600; cursor: pointer; }
   .out:hover { background: rgba(255,255,255,.15); }
+  td input:disabled, td select:disabled { opacity: 1; cursor: default; }
+  td input:disabled { color: inherit; } td select:disabled { appearance: none; }
+  td input:disabled:hover { border-color: transparent; background: transparent; }
+  .layout { display: grid; grid-template-columns: 240px 1fr; min-height: calc(100vh - 52px); }
+  nav { background: var(--card); border-right: 1px solid var(--line); padding: 14px 10px; overflow-y: auto;
+    max-height: calc(100vh - 52px); position: sticky; top: 52px; }
+  nav .sec { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em;
+    color: var(--muted); margin: 14px 10px 6px; }
+  nav a { display: flex; justify-content: space-between; align-items: center; padding: 7px 10px;
+    border-radius: 6px; color: var(--text); text-decoration: none; font-size: 14.5px; }
+  nav a:hover { background: var(--blue-tint); }
+  nav a.on { background: var(--blue); color: #fff; }
+  nav a .n { font-size: 12px; background: var(--ns-bg); color: var(--muted); border-radius: 10px; padding: 0 7px; min-width: 22px; text-align: center; }
+  nav a.on .n { background: rgba(255,255,255,.25); color: #fff; }
+  .layout.collapsed { grid-template-columns: 1fr; }
+  .layout.collapsed nav { display: none; }
+  nav a .me { font-size: 11px; color: var(--amber); font-weight: 700; margin-left: 6px; }
   main { padding: 22px 26px; min-width: 0; }
-  .navbtn { background: none; border: 0; color: #fff; width: 34px; height: 34px; border-radius: 6px; cursor: pointer; display: grid; place-items: center; padding: 0; margin-left: -6px; }
-  .navbtn:hover { background: rgba(255,255,255,.15); }
-  .layout { display: grid; grid-template-columns: 250px 1fr; min-height: calc(100vh - 54px); }
-  .layout.collapsed, body.signedout .layout { grid-template-columns: 1fr; }
-  .layout.collapsed #side, body.signedout #side, body.signedout .navbtn { display: none; }
-  #side { background: var(--card); border-right: 1px solid var(--line); padding: 12px 10px; overflow-y: auto; max-height: calc(100vh - 54px); position: sticky; top: 54px; }
-  #side .sec { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 14px 10px 6px; }
-  #side .item { display: flex; align-items: center; gap: 6px; width: 100%; padding: 7px 10px; border: 0; border-radius: 6px; background: none; color: var(--text); text-decoration: none; font-size: 14.5px; text-align: left; cursor: pointer; }
-  #side .item:hover { background: var(--blue-tint); }
-  #side .item.on { background: var(--blue); color: #fff; }
-  #side .item .lbl { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  #side .item .n { font-size: 12px; background: var(--grey-bg); color: var(--muted); border-radius: 10px; padding: 0 7px; min-width: 22px; text-align: center; }
-  #side .item.on .n { background: rgba(255,255,255,.25); color: #fff; }
-  #side .item .who { font-size: 11px; font-weight: 700; color: var(--ok); white-space: nowrap; }
-  #side .item .who.none { color: var(--muted); font-weight: 400; } #side .item .who.part { color: var(--amber-text); }
-  #side .item.on .who { color: #fff; }
-  #side .item.act { color: var(--blue); font-weight: 600; }
-  .assignbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 12px 14px; }
-  h2 { margin: 0 0 4px; font-size: 24px; } h3 { margin: 0 0 8px; font-size: 17px; }
-  .sub, .muted { color: var(--muted); } .sub { margin: 0 0 16px; }
-  .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px; margin-bottom: 16px; }
-  input, select, textarea { border: 1px solid var(--line); border-radius: 6px; padding: 7px 9px; background: #fff; min-width: 0; }
-  textarea { width: 100%; min-height: 90px; resize: vertical; }
+  h2 { margin: 0 0 4px; font-size: 24px; }
+  .sub { color: var(--muted); margin: 0 0 16px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+  .chip { border: 1px solid var(--line); background: var(--card); border-radius: 8px; padding: 8px 14px; cursor: pointer; text-align: left; }
+  .chip b { display: block; font-size: 20px; line-height: 1.1; }
+  .chip span { font-size: 13px; color: var(--muted); }
+  .chip.on { border-color: var(--blue); box-shadow: 0 0 0 2px var(--blue-tint); }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px; margin-bottom: 16px; }
+  .add { display: grid; grid-template-columns: 150px 180px 1fr 140px 1fr auto; gap: 8px; }
+  .add input, .add select, .tools input, .tools select, .card input, .card select, .card textarea {
+    border: 1px solid var(--line); border-radius: 6px; padding: 7px 9px; background: #fff; min-width: 0; }
   input:focus, select:focus, textarea:focus { outline: 2px solid var(--blue); outline-offset: -1px; }
-  .btn { background: var(--blue); color: #fff; border: 0; border-radius: 6px; padding: 7px 16px; font-weight: 600; cursor: pointer; text-decoration: none; display: inline-block; }
+  .btn { background: var(--blue); color: #fff; border: 0; border-radius: 6px; padding: 7px 16px; font-weight: 600; cursor: pointer; }
   .btn:hover { background: var(--blue-dark); }
   .btn.ghost { background: transparent; color: var(--blue); border: 1px solid var(--blue); }
-  .btn.danger { background: transparent; color: var(--bad); border: 1px solid var(--bad); }
-  button:disabled { opacity: .4; cursor: default; }
-  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
-  .spacer { flex: 1; }
-  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
-  .chip { border: 1px solid var(--line); background: var(--card); border-radius: 8px; padding: 8px 14px; cursor: pointer; text-align: left; }
-  .chip b { display: block; font-size: 20px; line-height: 1.1; } .chip span { font-size: 13px; color: var(--muted); }
-  .chip.on { border-color: var(--blue); box-shadow: 0 0 0 2px var(--blue-tint); }
-  .chip.amber b { color: var(--amber-text); }
+  .tools { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+  .tools input { flex: 1; min-width: 180px; }
+  .tools .range { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); }
+  .tools .range input { flex: 0 0 auto; min-width: 0; }
   .tablewrap { background: var(--card); border: 1px solid var(--line); border-radius: 10px; overflow-x: auto; }
-  table { border-collapse: collapse; width: 100%; min-width: 860px; }
+  table { border-collapse: collapse; width: 100%; min-width: 760px; }
   th { background: #1F3864; color: #fff; text-align: left; font-weight: 600; font-size: 14px; padding: 9px 10px; white-space: nowrap; }
-  td { border-top: 1px solid var(--line); padding: 8px 10px; vertical-align: top; }
-  tbody tr { cursor: pointer; } tbody tr:hover { background: var(--blue-tint); }
-  tr.cb td:first-child { box-shadow: inset 4px 0 0 var(--amber); }
-  td.n { white-space: nowrap; color: var(--muted); } td.num { text-align: center; }
-  .badge { display: inline-block; font-weight: 600; font-size: 13px; border-radius: 12px; padding: 2px 10px; white-space: nowrap; }
-  .b-Open { color: var(--muted); background: var(--grey-bg); } .b-Inprogress { color: var(--ip); background: var(--blue-tint); }
-  .b-Fixed { color: var(--ok); background: var(--ok-bg); } .b-Closed { color: var(--muted); background: transparent; border: 1px solid var(--line); }
-  .b-cameback { color: var(--amber-text); background: var(--amber-bg); border: 1px solid var(--amber); }
-  .b-pass { color: var(--ok); background: var(--ok-bg); } .b-fail { color: var(--bad); background: var(--bad-bg); } .b-error { color: var(--muted); background: var(--grey-bg); }
-  .p-Critical { color: #fff; background: var(--bad); } .p-High { color: #fff; background: var(--blue); }
-  .p-Medium { color: var(--ip); background: var(--blue-tint); } .p-Low { color: var(--muted); background: var(--grey-bg); }
-  .audit h3 { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; } .audit .ref { font-weight: 700; color: var(--blue); }
-  .audit table { min-width: 0; } .audit tbody tr { cursor: default; } .audit tbody tr:hover { background: none; }
-  .audit td.k { width: 190px; color: var(--muted); } .audit td.v { white-space: pre-wrap; overflow-wrap: anywhere; }
-  .audit td.code { font: 13px/1.5 Consolas, monospace; }
-  .b-passing { color: var(--ok); background: #fff; border: 1px dashed var(--ok); }
-  select.inl { border: 1px solid transparent; border-radius: 12px; font-weight: 600; font-size: 13px; padding: 2px 4px; cursor: pointer; max-width: 120px; }
-  select.inl:hover { border-color: var(--blue); }
-  select.inl.p-none { color: var(--muted); background: #fff; border-color: var(--line); }
-  select.inl.b-Closed { background: #fff; }
-  select.inl option { background: #fff; color: var(--text); }
-  .grid2 { display: grid; grid-template-columns: 170px 1fr; gap: 6px 14px; }
-  .grid2 dt { color: var(--muted); } .grid2 dd { margin: 0; overflow-wrap: anywhere; }
-  pre { white-space: pre-wrap; overflow-wrap: anywhere; font: 13px/1.5 Consolas, monospace; background: var(--bg); border-radius: 6px; padding: 10px; margin: 6px 0 0; max-height: 320px; overflow: auto; }
-  .tl { list-style: none; margin: 0; padding: 0; }
-  .tl li { border-left: 3px solid var(--line); padding: 4px 0 12px 14px; position: relative; }
-  .tl li::before { content: ''; position: absolute; left: -7px; top: 9px; width: 11px; height: 11px; border-radius: 50%; background: var(--line); }
-  .tl li.k-came_back::before { background: var(--amber); } .tl li.k-came_back { border-color: var(--amber); }
-  .tl li.k-status::before { background: var(--blue); } .tl li.k-note::before { background: #fff; border: 2px solid var(--blue); width: 7px; height: 7px; }
-  .tl li.fail::before { background: var(--bad); } .tl li.pass::before { background: var(--ok); }
-  .tl .when { font-size: 13px; color: var(--muted); } .tl .what { white-space: pre-wrap; overflow-wrap: anywhere; }
-  .form { display: grid; grid-template-columns: 170px 1fr; gap: 12px 14px; align-items: start; }
-  .form label.l { padding-top: 7px; font-weight: 600; } .form input[type=text], .form select { width: 100%; max-width: 640px; }
-  .form .hint { color: var(--muted); font-size: 13.5px; margin: 4px 0 0; }
-  .warn { background: var(--amber-bg); border: 1px solid var(--amber); border-radius: 8px; padding: 10px 12px; }
-  .names { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
-  .names span { background: var(--blue-tint); border-radius: 16px; padding: 4px 6px 4px 12px; display: inline-flex; align-items: center; gap: 4px; }
-  .names button { border: 0; background: none; cursor: pointer; color: var(--muted); font-size: 16px; }
-  .names button:hover { color: var(--bad); }
+  td { border-top: 1px solid var(--line); padding: 4px 6px; vertical-align: middle; }
+  tbody tr:nth-child(even) { background: #F7FAFD; }
+  td input, td select { width: 100%; border: 1px solid transparent; background: transparent; border-radius: 5px; padding: 5px 6px; }
+  td input:hover, td select:hover { border-color: var(--line); background: #fff; }
+  td.date { width: 150px; } td.mem { width: 170px; white-space: nowrap; padding-left: 12px; } td.st { width: 140px; } td.x { width: 40px; text-align: center; }
+  select.s { font-weight: 600; border-radius: 14px; }
+  .s-NotStarted { color: var(--ns); background: var(--ns-bg) !important; }
+  .s-InProgress { color: var(--ip); background: var(--ip-bg) !important; }
+  .s-Completed { color: var(--ok); background: var(--ok-bg) !important; }
+  .s-Blocked { color: var(--bl); background: var(--bl-bg) !important; }
+  .del { border: 0; background: none; color: var(--muted); cursor: pointer; font-size: 18px; border-radius: 5px; width: 30px; height: 30px; }
+  .del:hover { background: var(--bl-bg); color: var(--bl); }
   .empty { padding: 30px; text-align: center; color: var(--muted); }
-  .login { max-width: 380px; margin: 60px auto; display: grid; gap: 12px; }
-  .pick { display: flex; flex-wrap: wrap; gap: 8px; }
-  .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #1F2933; color: #fff; padding: 10px 18px; border-radius: 8px; opacity: 0; transition: opacity .2s; pointer-events: none; z-index: 10; max-width: 90vw; }
-  .toast.show { opacity: 1; } .toast.err { background: var(--bad); }
-  a { color: var(--blue); }
-  @media (max-width: 760px) {
-    main { padding: 16px; } header { padding: 10px 16px; } #tabs { order: 3; flex-basis: 100%; }
-    .layout { grid-template-columns: 1fr; }
-    #side { position: static; max-height: none; display: flex; overflow-x: auto; gap: 4px; padding: 8px; border-right: 0; border-bottom: 1px solid var(--line); }
-    #side .sec { display: none; } #side .item { width: auto; white-space: nowrap; } #side .item .lbl { overflow: visible; }
-    .grid2, .form { grid-template-columns: 1fr; } .form label.l { padding-top: 0; }
+  .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #1F2933; color: #fff;
+    padding: 10px 18px; border-radius: 8px; opacity: 0; transition: opacity .2s; pointer-events: none; z-index: 10; }
+  .toast.show { opacity: 1; } .toast.err { background: var(--bl); }
+  .banner { background: #FFF3D6; border: 1px solid #F5D48A; border-radius: 10px; padding: 12px 14px; margin-bottom: 16px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .members { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
+  .members span { background: var(--blue-tint); border-radius: 16px; padding: 4px 6px 4px 12px; display: inline-flex; align-items: center; gap: 4px; }
+  .members button { border: 0; background: none; cursor: pointer; color: var(--muted); font-size: 16px; }
+  .members button:hover { color: var(--bl); }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  textarea { width: 100%; min-height: 140px; font-family: Consolas, monospace; font-size: 13px; }
+  h3 { margin: 0 0 6px; font-size: 17px; }
+  .hint { color: var(--muted); font-size: 13.5px; margin: 0 0 8px; }
+  .chip.static { cursor: default; }
+  .day h3 { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+  table.ro { min-width: 0; }
+  table.fixed { table-layout: fixed; min-width: 640px; } td.nt { width: 32%; } table.ro td { padding: 7px 10px; } table.ro th { padding: 7px 10px; }
+  .muted { color: var(--muted); }
+  .badge { display: inline-block; font-weight: 600; font-size: 13px; border-radius: 12px; padding: 2px 10px; white-space: nowrap; }
+  .linkbtn { border: 0; background: none; color: var(--blue); cursor: pointer; padding: 0; font-weight: 600; text-align: left; }
+  .linkbtn:hover { text-decoration: underline; }
+  .mpills { display: flex; flex-wrap: wrap; gap: 6px; }
+  .mpill { border: 1px solid var(--line); background: var(--card); color: var(--blue); border-radius: 999px; padding: 3px 10px; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+  .mpill b { color: var(--text, inherit); margin-left: 4px; }
+  .mpill:hover { border-color: var(--blue); }
+  .mpill.zero { color: var(--muted); font-weight: 400; }
+  .mpill.on { background: var(--blue); border-color: var(--blue); color: #fff; }
+  .mpill.on b { color: #fff; }
+  button:disabled { opacity: .4; cursor: default; }
+  @media (max-width: 900px) {
+    .layout, .layout.collapsed { grid-template-columns: 1fr; }
+    #tabs { order: 3; flex-basis: 100%; }
+    nav { position: static; max-height: none; display: flex; overflow-x: auto; gap: 4px; padding: 8px; border-right: 0; border-bottom: 1px solid var(--line); }
+    nav .sec { display: none; } nav a { white-space: nowrap; }
+    .add { grid-template-columns: 1fr 1fr; } .add .wide { grid-column: 1 / -1; }
+    main { padding: 16px; } header { padding: 10px 16px; flex-wrap: wrap; }
   }
+  .login { max-width: 380px; margin: 60px auto; display: grid; gap: 12px; }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 </head>
 <body class="signedout">
 <header>
   <button type="button" class="navbtn" id="navBtn" aria-label="Show or hide the sidebar" title="Show or hide the sidebar"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/></svg></button>
-  <h1>Dev Issue Tracker</h1>
-  <nav id="tabs"></nav>
+  <h1>Team Task Tracker</h1>
+  <div id="tabs"></div>
   <span id="who"></span>
 </header>
-<div class="layout"><aside id="side" aria-label="Tabs"></aside><main id="main"></main></div>
-<div class="toast" id="toast" role="status"></div>
+<div class="layout">
+  <nav id="nav"></nav>
+  <main id="main"></main>
+</div>
+<div class="toast" id="toast"></div>
 
 <script>
-// ---------- settings: same Supabase project as the Team Task Tracker ----------
+let S = { members: [], statuses: [], tasks: [] };
+let filters = { q: '', status: '', from: '', to: '' };
+let currentView = null;
+const $ = (s, el = document) => el.querySelector(s);
+const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const cls = (st) => 's-' + String(st).replace(/\s/g, '');
+const today = () => { const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 10); };
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const fmtDate = (iso) => { const [y, m, d] = iso.split('-'); return `${d}-${MONTHS[m - 1]}-${y}`; };
+const store = { get: (k) => { try { return localStorage.getItem(k) || ''; } catch { return ''; } },
+                set: (k, v) => { try { localStorage.setItem(k, v); } catch {} } };
+const me = () => store.get('tt_me');
+const signedIn = () => S.members.includes(me());
+// Own tasks only: everyone sees every task, but only the owner (or the admin) can change one.
+// ponytail: enforced on screen only; the team shares one login, so real per person locks need personal accounts
+const canEdit = (t) => S.admin || t.member === me();
+
+function toast(msg, err) {
+  const t = $('#toast'); t.textContent = msg; t.className = 'toast show' + (err ? ' err' : '');
+  clearTimeout(t._h); t._h = setTimeout(() => (t.className = 'toast'), 2600);
+}
+// ---------- data: Supabase. Row level security lets only the signed in team login read or write. ----------
+// Fill these in from Supabase (see SETUP.txt). The URL and anon key are safe to publish; the password is the secret.
 const SUPABASE_URL = 'https://ybynpkunqhygujfzbidc.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlieW5wa3VucWh5Z3VqZnpiaWRjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQzMDY5MjMsImV4cCI6MjEwOTg4MjkyM30.TyfdxboPGwk668bVTAMXQMJeblRpgGoZ5dYsefCd4TA';
-const DEV_EMAIL = 'devtracker@curemd.com';     // shared dev team login; must match di_role() in setup.sql
-const ADMIN_EMAIL = 'trackeradmin@curemd.com'; // the owner's login; must match di_role() in setup.sql
-// Own storage key: both apps live on the same github.io address, so they must not share a saved login.
-const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { storageKey: 'dev-issue-tracker-auth' } });
+const TEAM_EMAIL = 'tasktracker@curemd.com';   // the one shared login; must match the email in setup.sql
+const ADMIN_EMAIL = 'trackeradmin@curemd.com'; // the main admin login (own password); must match admin.sql
+const STATUSES = ['Not Started', 'In Progress', 'Completed', 'Blocked'];
+const configured = SUPABASE_URL.startsWith('https://');
+const sb = configured ? supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
 
-// ---------- helpers ----------
-const $ = (s, el = document) => el.querySelector(s);
-const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-const fmtDay = iso => { if (!iso) return ''; const [y, m, d] = iso.slice(0, 10).split('-'); return `${+d} ${MONTHS[m - 1]} ${y}`; };
-const fmtTs = ts => { if (!ts) return ''; const d = new Date(ts); return `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}, ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; };
-const localDay = ts => { const d = new Date(ts); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 10); };
-const today = () => localDay(Date.now());
-const store = { get: k => { try { return localStorage.getItem(k) || ''; } catch { return ''; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch {} } };
-function toast(msg, err) { const t = $('#toast'); t.textContent = msg; t.className = 'toast show' + (err ? ' err' : ''); clearTimeout(t._h); t._h = setTimeout(() => (t.className = 'toast'), err ? 5000 : 2600); }
-async function rpc(fn, args) { const { data, error } = await sb.rpc(fn, args); if (error) throw new Error(error.message); return data; }
-async function rows(q) { const { data, error } = await q; if (error) throw new Error(error.message); return data; }
-const guard = fn => async (...a) => { try { await fn(...a); } catch (e) { toast(e.message, true); } };
+function check(error) {
+  if (!error) return;
+  const known = { '23503': 'Pick a team member from the list.', '23502': 'Pick a team member.',
+    '23514': 'Task name is required, and the status must be one from the list.',
+    '22007': 'Date must be a valid date.', '22008': 'Date must be a valid date.',
+    'PGRST116': 'Task not found. Someone may have deleted it.' };
+  throw new Error(known[error.code] || error.message || 'Something went wrong. Check your internet connection.');
+}
+const clean = (t) => { const o = {};
+  for (const k of ['date', 'member', 'task', 'status', 'notes']) if (k in t) o[k] = typeof t[k] === 'string' ? t[k].trim() : t[k];
+  return o; };
+const putTask = (t) => { const i = S.tasks.findIndex((x) => x.id === t.id); if (i < 0) S.tasks.push(t); else S.tasks[i] = t; };
 
-// ---------- state ----------
-let S = { admin: false, members: [], issues: [], lastRun: null };
-const me = () => S.admin ? 'Owner' : store.get('dit_me');
-const activeNames = () => S.members.filter(m => m.active).map(m => m.name);
-const STATUSES = ['Open', 'In progress', 'Fixed', 'Closed'];
-const statusChoices = () => S.admin ? STATUSES : ['Open', 'In progress', 'Fixed'];
-const CHECKS = {
-  manual: 'Manual (check by hand)',
-  links: 'Links in an area must not redirect or break',
-  response: 'Address must respond a certain way',
-  text: 'Page must contain or must not contain text',
-  meta: 'Page title or meta description must match',
+async function loadMembers() {
+  const { data, error } = await sb.from('members').select('name').eq('active', true).order('pos');
+  check(error); return data.map((x) => x.name);
+}
+const db = {
+  async state() {
+    // ponytail: downloads every task on page open; fine for years at this team's pace, add a date window if it ever feels slow
+    const tasks = [];
+    for (let from = 0; ; from += 1000) {   // the API returns at most 1000 rows per call
+      const { data, error } = await sb.from('tasks').select('*').order('id').range(from, from + 999);
+      check(error); tasks.push(...data);
+      if (data.length < 1000) break;
+    }
+    const { data: { session } } = await sb.auth.getSession();
+    return { members: await loadMembers(), statuses: STATUSES, tasks, admin: session?.user.email === ADMIN_EMAIL };
+  },
+  async addTask(t) { const { data, error } = await sb.from('tasks').insert(clean(t)).select().single(); check(error); return data; },
+  async updateTask(id, patch) {
+    const { data, error } = await sb.from('tasks').update({ ...clean(patch), updated: new Date().toISOString() }).eq('id', id).select().single();
+    check(error); return data;
+  },
+  async deleteTask(id) { const { error } = await sb.from('tasks').delete().eq('id', id); check(error); },
+  async addMember(name) {
+    name = String(name).trim();
+    if (!name) throw new Error('Name is required.');
+    if (S.members.some((x) => x.toLowerCase() === name.toLowerCase())) throw new Error('That member already exists.');
+    const { error } = await sb.from('members').upsert({ name, active: true }, { onConflict: 'name' });   // also brings back a removed member
+    check(error); return db.state();
+  },
+  async removeMember(name) {   // removed members keep their tasks; they just leave the dropdowns
+    const { error } = await sb.from('members').update({ active: false }).eq('name', name); check(error); return db.state();
+  },
+  async importRows(rows) {
+    rows = rows.slice(0, 5000);
+    const fresh = [...new Set(rows.map((r) => r.member))].filter((n) => !S.members.includes(n));
+    if (fresh.length) { const { error } = await sb.from('members').upsert(fresh.map((name) => ({ name, active: true })), { onConflict: 'name' }); check(error); }
+    const { error } = await sb.from('tasks').insert(rows.map(clean)); check(error);
+    return { added: rows.length, ...(await db.state()) };
+  },
 };
-const RESULT = { pass: 'Passed', fail: 'Failed', error: 'Could not check' };
-const internalAddr = u => /^https?:\/\/(localhost|127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/i.test(u);
 
-function statusBadge(i) {
-  if (i.came_back && i.status !== 'Fixed' && i.status !== 'Closed')
-    return `<span class="badge b-cameback" title="Was fixed, then broke again">Came back</span>${i.status === 'In progress' ? ' <span class="badge b-Inprogress">In progress</span>' : ''}`;
-  return `<span class="badge b-${i.status.replace(/\s/g, '')}">${esc(i.status)}</span>`;
+function view() {
+  const h = decodeURIComponent(location.hash.slice(1));
+  if (h === 'settings' && S.admin) return { kind: 'settings' };   // only the main admin sees Settings
+  if (h === 'week') return { kind: 'week' };
+  if (h.startsWith('m/')) return { kind: 'member', name: h.slice(2) };
+  return { kind: 'all' };
 }
-const passingBadge = i => (i.status === 'Open' || i.status === 'In progress') && i.last_check_result === 'pass' ? ' <span class="badge b-passing" title="The latest check passed. Mark it Fixed if dev has fixed it.">check passing</span>' : '';
-const resultBadge = i => i.last_check_result ? `<span class="badge b-${i.last_check_result}">${RESULT[i.last_check_result]}</span> <span class="muted">${fmtDay(localDay(i.last_check_at))}</span>` : '<span class="muted">Not checked yet</span>';
 
-function describeCheck(i) {
-  const c = i.check_config || {};
-  if (i.check_type === 'links') {
-    const areas = (c.areas || ['page']).map(a => a === 'page' ? 'whole page' : a).join(' and ');
-    return `Every link to the same site in the ${areas} must answer 200 with no redirect.` + (c.exempt?.length ? ` Exempt: ${c.exempt.join(', ')}` : '');
+// ---------- rendering ----------
+function renderHeader() {
+  $('#who').innerHTML = `<span>Signed in as <b>${esc(me())}</b>${S.admin ? ' (admin)' : ''}</span>
+    <button type="button" class="out" id="signOut">Sign out</button>`;
+}
+
+function showPick() {   // sign in step: choose your name
+  $('#who').innerHTML = ''; $('#nav').innerHTML = '';
+  if (currentView === 'pick') return;   // background refreshes must not reset a half made choice
+  currentView = 'pick';
+  $('#main').innerHTML = `<form class="card login" id="pickForm">
+      <h2>Sign in</h2><p class="sub" style="margin:0">Choose your name. Tasks you add are saved under it, and you can edit only your own tasks.</p>
+      <select name="me" required aria-label="Your name"><option value="">Choose your name</option>${S.members.map((m) => `<option>${esc(m)}</option>`).join('')}</select>
+      <button class="btn">Sign in</button></form>`;
+  $('#pickForm').addEventListener('submit', (e) => {
+    e.preventDefault(); store.set('tt_me', e.target.me.value); currentView = null; location.hash = ''; render();
+  });
+}
+
+function renderNav() {
+  const v = view();
+  const total = (name) => S.tasks.filter((t) => t.member === name).length;
+  const link = (href, label, n, on, extra = '') =>
+    `<a href="${href}" class="${on ? 'on' : ''}"><span>${esc(label)}${extra}</span>${n === null ? '' : `<span class="n">${n}</span>`}</a>`;
+  const thisWeek = weekSoFar();
+  const shut = navCollapsed();
+  document.querySelector('.layout').classList.toggle('collapsed', shut);
+  $('#navBtn').setAttribute('aria-expanded', String(!shut));
+  const tab = (href, label, on) => `<a href="${href}" class="tab${on ? ' on' : ''}">${esc(label)}</a>`;
+  $('#tabs').innerHTML = shut ? tab('#all', 'All Tasks', v.kind === 'all') + tab('#week', 'This Week', v.kind === 'week') +
+    tab('#m/' + encodeURIComponent(me()), 'My Tasks', v.kind === 'member' && v.name === me()) : '';
+  let html = link('#all', 'All Tasks', S.tasks.length, v.kind === 'all');
+  html += link('#week', 'This Week', S.tasks.filter((t) => thisWeek.includes(t.date)).length, v.kind === 'week');
+  if (me() && S.members.includes(me())) html += link('#m/' + encodeURIComponent(me()), 'My Tasks', total(me()), false);
+  html += '<div class="sec">Team members (total tasks)</div>';
+  html += S.members.map((m) => link('#m/' + encodeURIComponent(m), m, total(m),
+    v.kind === 'member' && v.name === m, m === me() ? '<span class="me">YOU</span>' : '')).join('');
+  if (S.admin) html += '<div class="sec">Admin</div>' + link('#settings', 'Settings and import', null, v.kind === 'settings');
+  $('#nav').innerHTML = html;
+}
+const navCollapsed = () => store.get('tt_nav') === '1';   // remembered per browser
+$('#navBtn').addEventListener('click', () => { store.set('tt_nav', navCollapsed() ? '' : '1'); renderNav(); });
+
+function renderMain() {
+  const v = view();
+  const key = JSON.stringify(v);
+  if (key !== currentView) {          // build the static parts only when the view changes,
+    currentView = key;                // so the 15 second refresh never wipes a half typed task
+    filters = { ...filters, q: '', status: '' };   // date range carries over between views
+    if (v.kind === 'settings') { $('#main').innerHTML = settingsHTML(); bindSettings(); }
+    else if (v.kind === 'week') { $('#main').innerHTML = weekHTML(); bindWeek(); }
+    else { $('#main').innerHTML = listHTML(v); bindList(v); }
   }
-  if (i.check_type === 'response') return { '200': 'Each address must answer 200.', gone: 'Each address must answer 404 or 410.', redirect: `Each address must redirect in one hop to ${c.target}.` }[c.expect] || '';
-  if (i.check_type === 'text') return `The page ${c.mode === 'absent' ? 'must not contain' : 'must contain'} "${c.text}" (not case sensitive).`;
-  if (i.check_type === 'meta') return `The ${c.field === 'title' ? 'title' : 'meta description'} must ${c.match === 'contains' ? 'contain' : 'be exactly'} "${c.expected}".`;
-  return 'No automatic check. Shown in the weekly "check by hand" list.';
+  if (v.kind === 'settings') renderMembersList();
+  else if (v.kind === 'week') renderWeek();
+  else renderTable(v);
 }
 
-// Came back first, then open work, then fixed, then closed; within each: priority, newest asked, then the order entered.
-const RANK = { Open: 1, 'In progress': 1, Fixed: 2, Closed: 3 };
-const PRIORITIES = ['Critical', 'High', 'Medium', 'Low'];
-const prank = i => i.priority ? PRIORITIES.indexOf(i.priority) : 9;
-const prioBadge = i => i.priority ? `<span class="badge p-${i.priority}">${i.priority}</span>` : '';
-const sortIssues = list => [...list].sort((a, b) =>
-  ((b.came_back && RANK[b.status] === 1) - (a.came_back && RANK[a.status] === 1)) || (RANK[a.status] - RANK[b.status]) || (prank(a) - prank(b)) || b.date_asked.localeCompare(a.date_asked) || a.id - b.id);
-
-// ---------- data ----------
-async function loadAll() {
-  const [members, issues, runs, cats] = await Promise.all([
-    rows(sb.from('dev_members').select('*').order('name')),
-    rows(sb.from('issues').select('*')),
-    rows(sb.from('check_runs').select('*').order('finished', { ascending: false }).limit(1)),
-    rows(sb.from('categories').select('name')),
-  ]);
-  const natural = (a, b) => a.localeCompare(b, undefined, { numeric: true });
-  Object.assign(S, { members, issues, lastRun: runs[0] || null, cats: cats.map(c => c.name).sort(natural) });
+// ---------- this week view (Monday to Friday of the current week) ----------
+let week = { member: '' };
+const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+const pad = (n) => String(n).padStart(2, '0');
+const isoLocal = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+function weekDays() {
+  // Monday to Friday of the current week. On Saturday and Sunday this is the week just finished.
+  const d = new Date(); d.setHours(12, 0, 0, 0);    // noon avoids daylight saving edge cases
+  d.setDate(d.getDate() - ((d.getDay() + 6) % 7));  // back to Monday
+  return [0, 1, 2, 3, 4].map((i) => { const x = new Date(d); x.setDate(d.getDate() + i); return isoLocal(x); });
 }
+const weekSoFar = () => weekDays().filter((d) => d <= today());  // only days that have happened so far
 
-// ---------- shell ----------
-function renderHeader(signedIn) {
-  const tabs = [['#/issues', 'Issues'], ['#/report', 'Weekly report']];
-  if (S.admin) tabs.push(['#/new', 'Add issue'], ['#/settings', 'Settings']);
-  const cur = '#/' + (location.hash.split('/')[1] || 'issues');
-  $('#tabs').innerHTML = signedIn ? tabs.map(([h, t]) => `<a class="tab ${h === cur ? 'on' : ''}" href="${h}">${t}</a>`).join('') : '';
-  document.body.classList.toggle('signedout', !signedIn);
-  $('#who').innerHTML = signedIn ? `Signed in as <b>${esc(me())}</b> <button type="button" class="out" id="signOut">Sign out</button>` : '';
-}
-
-async function route() {
-  const { data: { session } } = await sb.auth.getSession();
-  S.admin = session?.user.email === ADMIN_EMAIL;
-  if (!session) { renderHeader(false); return renderSignIn(); }
-  try { await loadAll(); } catch (e) { $('#main').innerHTML = `<div class="card">Could not load: ${esc(e.message)}</div>`; return; }
-  if (!S.admin && !activeNames().includes(me())) { renderHeader(false); return renderPickName(); }
-  renderHeader(true);
-  const [, view, id] = location.hash.split('/');
-  renderSide(view || 'issues');
-  const views = { issues: renderList, issue: () => renderIssue(+id), new: () => renderForm(null), edit: () => renderForm(+id), report: renderReport, settings: renderSettings, import: renderImport };
-  if (['new', 'edit', 'settings', 'import'].includes(view) && !S.admin) return (location.hash = '#/issues');
-  await (views[view] || renderList)();
-  window.scrollTo(0, 0);
-}
-window.addEventListener('hashchange', route);
-document.addEventListener('click', guard(async e => {
-  if (e.target.id !== 'signOut') return;
-  store.set('dit_me', '');
-  await sb.auth.signOut();
-  location.hash = ''; location.reload();
-}));
-
-// ---------- sign in ----------
-function renderSignIn() {
-  $('#main').innerHTML = `<form class="card login" id="f"><h2>Sign in</h2>
-    <p class="sub">Use the dev team password. The owner uses their own password in the same box.</p>
-    <input type="password" id="pw" placeholder="Password" autocomplete="current-password" required aria-label="Password">
-    <button class="btn">Sign in</button></form>`;
-  $('#pw').focus();
-  $('#f').onsubmit = guard(async e => {
-    e.preventDefault();
-    const password = $('#pw').value;
-    let { error } = await sb.auth.signInWithPassword({ email: DEV_EMAIL, password });
-    if (error && error.status === 400) ({ error } = await sb.auth.signInWithPassword({ email: ADMIN_EMAIL, password }));
-    if (error) throw new Error(error.status === 400 ? 'Wrong password.' : error.message);
-    route();
-  });
-}
-function renderPickName() {
-  const names = activeNames();
-  $('#main').innerHTML = `<div class="card login"><h2>Who are you?</h2>
-    <p class="sub">Your name goes on every change you make.</p>
-    ${names.length ? `<div class="pick">${names.map(n => `<button class="btn ghost" data-n="${esc(n)}">${esc(n)}</button>`).join('')}</div>` : '<p>No dev names yet. Ask the owner to add yours in Settings.</p>'}
-    <button type="button" class="out" id="signOut" style="color:var(--blue);border-color:var(--line)">Sign out</button></div>`;
-  $('#main').querySelectorAll('[data-n]').forEach(b => b.onclick = () => { store.set('dit_me', b.dataset.n); route(); });
-}
-
-// ---------- issues list ----------
-let listFilter = store.get('dit_filter') || 'active', listQ = '', listPri = '', listCat = store.get('dit_cat');
-// Views are kept in the same place as tabs; they start with @@ (plain text, so it survives HTML attributes); tab names are not expected to start with it.
-const NO_TAB = '@@none', V_CB = '@@cameback', V_MINE = '@@mine', V_UNASG = '@@unassigned', TEAM = '@@team';
-const inCat = (i, c = listCat) => !c ? true : c === NO_TAB ? !i.category : c === V_CB ? i.came_back && RANK[i.status] === 1
-  : c === V_MINE ? i.assigned_to === me() : c === V_UNASG ? !i.assigned : i.category === c;
-const notClosed = i => i.status !== 'Closed';
-const visibleCats = () => S.admin ? S.cats : S.cats.filter(c => S.issues.some(i => i.category === c));
-const catLabel = c => ({ '': 'All issues', [NO_TAB]: 'No tab', [V_CB]: 'Came back', [V_MINE]: 'Assigned to me', [V_UNASG]: 'Not assigned' }[c] ?? c);
-const assignLabel = i => i.assigned ? (i.assigned_to || 'Whole dev team') : 'Not assigned';
-// How a tab is assigned, judged on its issues that are not closed: { key: '' | TEAM | name | 'mixed', text }.
-function tabAssign(c) {
-  const open = S.issues.filter(i => i.category === c && notClosed(i));
-  if (!open.length) return { key: null, text: '' };
-  const keys = [...new Set(open.map(i => !i.assigned ? '' : i.assigned_to || TEAM))];
-  if (keys.length > 1) return { key: 'mixed', text: 'Partly' };
-  return { key: keys[0], text: keys[0] === '' ? 'Not assigned' : keys[0] === TEAM ? 'Team' : keys[0] };
-}
-const navCollapsed = () => store.get('dit_nav') === '1';
-$('#navBtn').addEventListener('click', () => { store.set('dit_nav', navCollapsed() ? '' : '1'); route(); });
-function pickCat(c) { listCat = c; store.set('dit_cat', c); if ((location.hash.split('/')[1] || 'issues') === 'issues') { renderList(); renderSide('issues'); } else location.hash = '#/issues'; }
-
-function renderSide(view) {
-  document.querySelector('.layout').classList.toggle('collapsed', navCollapsed());
-  $('#navBtn').setAttribute('aria-expanded', String(!navCollapsed()));
-  const onList = view === 'issues';
-  const item = (c, extra = '') => `<button class="item ${onList && c === listCat ? 'on' : ''}" data-cat="${esc(c)}"><span class="lbl">${esc(catLabel(c))}</span>${extra}<span class="n">${S.issues.filter(i => notClosed(i) && inCat(i, c)).length}</span></button>`;
-  let h = item('') + item(V_CB) + (S.admin ? item(V_UNASG) : item(V_MINE));
-  h += `<div class="sec">Tabs</div>` + visibleCats().map(c => {
-    if (!S.admin) return item(c);
-    const t = tabAssign(c);
-    // unassigned tabs show no label (the Not assigned view lists them), so tab names have room
-    return item(c, t.key ? `<span class="who ${t.key === 'mixed' ? 'part' : ''}" title="Assigned to">${esc(t.text)}</span>` : '');
-  }).join('');
-  if (S.issues.some(i => !i.category)) h += item(NO_TAB);
-  if (S.admin) h += `<button class="item act" id="newCat">+ New tab</button><a class="item act" href="#/import">Import</a>`;
-  $('#side').innerHTML = h;
-  $('#side').querySelectorAll('[data-cat]').forEach(b => b.onclick = () => pickCat(b.dataset.cat));
-  if ($('#newCat')) $('#newCat').onclick = guard(async () => {
-    const name = (prompt('Name for the new tab') || '').trim(); if (!name) return;
-    if (name.length > 60) throw new Error('Keep tab names to 60 characters or fewer.');
-    await rpc('add_category', { p_name: name }); await loadAll();
-    toast('Tab added. Click Import to fill it.'); pickCat(name);
-  });
-}
-
-function renderList() {
-  const allViews = ['', V_CB, S.admin ? V_UNASG : V_MINE, ...visibleCats(), ...(S.issues.some(i => !i.category) ? [NO_TAB] : [])];
-  if (!allViews.includes(listCat)) listCat = '';
-  const is = S.issues.filter(i => inCat(i));
-  const isTab = listCat && !listCat.startsWith('@@');
-  const groups = {
-    active: ['Not closed', i => i.status !== 'Closed'],
-    cameback: ['Came back', i => i.came_back && RANK[i.status] === 1],
-    Open: ['Open', i => i.status === 'Open'],
-    'In progress': ['In progress', i => i.status === 'In progress'],
-    Fixed: ['Fixed', i => i.status === 'Fixed'],
-    Closed: ['Closed', i => i.status === 'Closed'],
-    all: ['All', () => true],
-  };
-  if (!groups[listFilter]) listFilter = 'active';
-  const q = listQ.toLowerCase();
-  const shown = sortIssues(is.filter(groups[listFilter][1])
-    .filter(i => !listPri || i.priority === listPri)
-    .filter(i => !q || (i.title + ' ' + i.description + ' ' + i.pages.join(' ')).toLowerCase().includes(q)));
-  const ta = isTab && S.admin ? tabAssign(listCat) : null, openHere = is.filter(notClosed).length;
-  const bulk = S.admin ? is : is.filter(notClosed);   // the owner's tab status change includes closed issues, so a closed tab can be reopened
-  const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
-  const asgOpt = (v, label, cur) => `<option value="${esc(v)}" ${v === cur ? 'selected' : ''}>${esc(label)}</option>`;
-  $('#main').innerHTML = `<div class="row"><h2>${esc(catLabel(listCat))}</h2><span class="spacer"></span>${S.admin ? '<a class="btn ghost" href="#/import">Import</a> <a class="btn" href="#/new">Add issue</a>' : ''}</div>
-    <p class="sub">${S.admin ? 'Every website issue sent to dev, with its full history. Dev only sees issues you have assigned. Came back issues are fixes that broke again.' : 'The issues assigned to the dev team. Came back issues are fixes that broke again.'}</p>
-    ${navCollapsed() ? `<div class="row" style="margin-bottom:12px"><label for="catSel" class="muted">Showing</label><select id="catSel">${allViews.map(c => asgOpt(c, catLabel(c), listCat)).join('')}</select></div>` : ''}
-    ${isTab && bulk.length ? `<div class="card assignbar">
-      ${ta && openHere ? `<b>Assigned to:</b> <span>${esc(ta.key === 'mixed' ? 'Partly assigned' : ta.text)}</span><span class="spacer"></span>
-      <label for="asgTab" class="muted">Assign this tab to</label>
-      <select id="asgTab">${asgOpt('', 'Not assigned (hidden from dev)', ta.key)}${asgOpt(TEAM, 'Whole dev team', ta.key)}${activeNames().map(n => asgOpt(n, n, ta.key)).join('')}</select>
-      <button class="btn" id="asgGo">Assign tab</button><span style="flex-basis:100%"></span>` : ''}
-      <b>Status:</b> <span>${esc([...new Set(bulk.map(i => i.status))].join(', '))}</span><span class="spacer"></span>
-      <label for="stTab" class="muted">Set status for this tab</label>
-      <select id="stTab">${statusChoices().map(st => `<option>${st}</option>`).join('')}</select>
-      <button class="btn" id="stGo">Apply to tab</button>
-      <span class="hint muted" style="flex-basis:100%;margin:0">${S.admin
-        ? `Status applies to all ${plural(bulk.length, 'issue', 'issues')} in this tab, closed ones included.${openHere ? ` Assigning applies to the ${plural(openHere, 'issue', 'issues')} not closed.` : ''} Each change is recorded in that issue's history. Dev only sees assigned issues.`
-        : `Applies to the ${plural(bulk.length, 'issue', 'issues')} in this tab that ${bulk.length === 1 ? 'is' : 'are'} not closed. Each change is recorded in that issue's history.`}</span></div>` : ''}
-    <div class="chips">${Object.entries(groups).map(([k, [label, fn]]) =>
-      `<button class="chip ${k === listFilter ? 'on' : ''} ${k === 'cameback' ? 'amber' : ''}" data-f="${esc(k)}"><b>${is.filter(fn).length}</b><span>${label}</span></button>`).join('')}</div>
-    <div class="row" style="margin-bottom:10px"><input id="q" type="search" placeholder="Search title, description or page" value="${esc(listQ)}" style="flex:1;max-width:420px" aria-label="Search">
-      <select id="fpri" aria-label="Priority"><option value="">Any priority</option>${PRIORITIES.map(p => `<option ${p === listPri ? 'selected' : ''}>${p}</option>`).join('')}</select>
-      <span class="muted">${shown.length} shown</span></div>
-    <div class="tablewrap"><table><thead><tr><th>#</th><th>Issue</th><th>Priority</th><th>Status</th><th>Asked dev</th><th>Came back</th><th>Last fixed</th><th>Last check</th><th>Assigned</th></tr></thead>
-    <tbody>${shown.map(i => `<tr data-id="${i.id}" class="${i.came_back && RANK[i.status] === 1 ? 'cb' : ''}">
-      <td class="n">${i.id}</td><td><a href="#/issue/${i.id}">${esc(i.title)}</a>${i.pages[0] ? `<div class="muted" style="font-size:13px">${esc(i.pages[0])}${i.pages.length > 1 ? ` and ${i.pages.length - 1} more` : ''}</div>` : ''}</td>
-      <td>${S.admin ? `<select class="inl psel p-${i.priority || 'none'}" data-id="${i.id}" aria-label="Priority of issue ${i.id}">${['', ...PRIORITIES].map(p => `<option value="${p}" ${p === (i.priority || '') ? 'selected' : ''}>${p || 'None'}</option>`).join('')}</select>` : prioBadge(i)}</td>
-      <td style="white-space:nowrap">${(S.admin || i.status !== 'Closed')
-        ? `<select class="inl ssel b-${i.status.replace(/\s/g, '')}" data-id="${i.id}" aria-label="Status of issue ${i.id}">${statusChoices().map(st => `<option ${st === i.status ? 'selected' : ''}>${st}</option>`).join('')}</select>${i.came_back && RANK[i.status] === 1 ? ' <span class="badge b-cameback" title="Was fixed, then broke again">Came back</span>' : ''}`
-        : statusBadge(i)}${passingBadge(i)}</td><td class="n">${fmtDay(i.date_asked)}</td>
-      <td class="num">${i.times_came_back ? `<b>${i.times_came_back}</b>` : '<span class="muted">0</span>'}</td>
-      <td class="n">${i.last_fixed ? fmtDay(localDay(i.last_fixed)) : ''}</td>
-      <td class="n">${i.check_type === 'manual' && !i.last_check_result ? '<span class="muted">By hand</span>' : resultBadge(i)}</td>
-      <td style="white-space:nowrap">${i.assigned ? esc(i.assigned_to || 'Dev team') : S.admin ? '<span class="muted">Not assigned</span>' : ''}</td></tr>`).join('')}</tbody></table>
-    ${shown.length ? '' : `<div class="empty">${is.length ? 'Nothing matches.' : isTab && S.admin ? 'This tab is empty. Click Import to bring issues into it, or Add issue.' : S.admin ? 'No issues here.' : 'Nothing has been assigned to the dev team here yet.'}</div>`}</div>`;
-  $('#main').querySelectorAll('[data-f]').forEach(b => b.onclick = () => { listFilter = b.dataset.f; store.set('dit_filter', listFilter); renderList(); });
-  $('#main').querySelectorAll('tbody tr').forEach(tr => tr.onclick = e => { if (!e.target.closest('a, select')) location.hash = '#/issue/' + tr.dataset.id; });
-  // Row dropdowns: change priority (owner) or status right in the list; each change is recorded in the issue's history.
-  const rowChange = (sel, fn) => $('#main').querySelectorAll(sel).forEach(s => s.onchange = guard(async () => {
-    try { await fn(+s.dataset.id, s.value); toast(`#${s.dataset.id} saved`); } finally { await loadAll(); renderList(); renderSide('issues'); }
-  }));
-  rowChange('.psel', (id, v) => rpc('set_priority', { p_id: id, p_priority: v }));
-  rowChange('.ssel', (id, v) => rpc('set_status', { p_id: id, p_status: v, p_actor: me() }));
-  if ($('#catSel')) $('#catSel').onchange = e => pickCat(e.target.value);
-  if ($('#stGo')) $('#stGo').onclick = guard(async () => {
-    const st = $('#stTab').value, cat = listCat;
-    if (!confirm(`Set ${S.admin ? 'every issue' : 'every issue that is not closed'} in ${cat} to "${st}"? (${plural(bulk.length, 'issue', 'issues')})`)) return;
-    const n = await rpc('set_status_category', { p_category: cat, p_status: st, p_actor: me() });
-    await loadAll(); renderList(); renderSide('issues');
-    toast(n ? `${cat}: ${n} issue${n === 1 ? '' : 's'} set to ${st}.` : `Nothing changed: those issues were already ${st}.`);
-  });
-  if ($('#asgGo')) $('#asgGo').onclick = guard(async () => {
-    const v = $('#asgTab').value, cat = listCat;
-    if (!v && !confirm(`Unassign ${cat}? Dev will no longer see its issues.`)) return;
-    const n = await rpc('assign_category', { p_category: cat, p_assigned: v !== '', p_person: v && v !== TEAM ? v : null });
-    await loadAll(); renderList(); renderSide('issues');
-    toast(n ? `${cat}: ${n} issue${n === 1 ? '' : 's'} ${v === '' ? 'unassigned' : 'assigned to ' + (v === TEAM ? 'the whole dev team' : v)}.` : 'Nothing changed: already assigned that way.');
-  });
-  $('#fpri').onchange = e => { listPri = e.target.value; renderList(); };
-  const qi = $('#q'); qi.oninput = () => { listQ = qi.value; const pos = qi.selectionStart; renderList(); const n = $('#q'); n.focus(); n.setSelectionRange(pos, pos); };
-}
-
-// ---------- one issue ----------
-const EVENT_LABEL = { created: 'Raised', status: 'Status', note: 'Note', edit: 'Edited', hand_check: 'Hand check', check: 'Weekly check', came_back: 'Came back' };
-async function renderIssue(id) {
-  const i = S.issues.find(x => x.id === id);
-  if (!i) { $('#main').innerHTML = '<div class="card">Issue not found. It may have been deleted.</div>'; return; }
-  const events = await rows(sb.from('issue_events').select('*').eq('issue_id', id).order('at', { ascending: false }).order('id', { ascending: false }));
-  const fixes = events.filter(e => e.kind === 'status' && / to Fixed$/.test(e.detail)).length;
-  const closed = i.status === 'Closed';
-  const lockedForMe = closed && !S.admin;
-  $('#main').innerHTML = `<p><a href="#/issues">All issues</a></p>
-    <div class="row"><h2>#${i.id} ${esc(i.title)}</h2><span class="spacer"></span>
-      ${S.admin ? `<a class="btn ghost" href="#/edit/${i.id}">Edit</a>${events.length <= 1 ? '<button class="btn danger" id="del">Delete</button>' : ''}` : ''}</div>
-    <p class="sub">${prioBadge(i)} ${statusBadge(i)}${passingBadge(i)} &nbsp;Asked dev on ${fmtDay(i.date_asked)}. Fixed ${fixes} time${fixes === 1 ? '' : 's'}, came back ${i.times_came_back} time${i.times_came_back === 1 ? '' : 's'}.</p>
-    <div class="card"><dl class="grid2">
-      <dt>${i.audit ? 'Fix for this item' : 'Description'}</dt><dd style="white-space:pre-wrap${/^\s*</.test(i.description) ? ';font:13px/1.5 Consolas,monospace' : ''}">${esc(i.description) || '<span class="muted">None</span>'}</dd>
-      <dt>Pages</dt><dd>${i.pages.map(p => `<div><a href="${esc(p)}" target="_blank" rel="noopener">${esc(p)}</a></div>`).join('') || '<span class="muted">None</span>'}</dd>
-      <dt>Tab</dt><dd>${esc(i.category || 'None')}</dd>
-      <dt>Assigned to</dt><dd>${esc(assignLabel(i))}${!i.assigned && S.admin ? ' <span class="muted">(hidden from dev)</span>' : ''}</dd>
-      <dt>Last fixed</dt><dd>${i.last_fixed ? fmtTs(i.last_fixed) : '<span class="muted">Never</span>'}</dd>
-      <dt>Check</dt><dd><b>${CHECKS[i.check_type]}.</b> ${esc(describeCheck(i))}</dd>
-      <dt>Last check</dt><dd>${i.last_check_result ? `<span class="badge b-${i.last_check_result}">${RESULT[i.last_check_result]}</span> ${fmtTs(i.last_check_at)}${i.last_check_detail ? `<pre>${esc(i.last_check_detail)}</pre>` : ''}` : '<span class="muted">Not checked yet</span>'}</dd>
-    </dl></div>
-    ${auditCard(i)}
-    <div class="card"><h3>Update</h3>
-      ${S.admin && !closed ? `<div class="row" style="margin-bottom:12px"><label for="asg1"><b>Assigned to</b></label>
-        <select id="asg1">${[['', 'Not assigned (hidden from dev)'], [TEAM, 'Whole dev team'], ...[...new Set([...activeNames(), ...(i.assigned_to ? [i.assigned_to] : [])])].map(n => [n, n])]
-          .map(([v, l]) => `<option value="${esc(v)}" ${v === (!i.assigned ? '' : i.assigned_to || TEAM) ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select>
-        <button class="btn" id="saveAsg">Save</button></div>` : ''}
-      ${lockedForMe ? '<p class="muted">This issue is closed. Only the owner can reopen it.</p>' : `
-      <div class="row" style="margin-bottom:12px"><label for="st"><b>Status</b></label>
-        <select id="st">${(statusChoices().includes(i.status) ? statusChoices() : [i.status, ...statusChoices()]).map(s => `<option ${s === i.status ? 'selected' : ''}>${s}</option>`).join('')}</select>
-        <button class="btn" id="saveSt">Save status</button></div>
-      ${closed ? '' : `<div class="row" style="margin-bottom:12px"><b>Checked by hand:</b>
-        <button class="btn ghost" id="hcOk">Still fine</button><button class="btn danger" id="hcBad">Broken</button></div>`}
-      <label for="note"><b>Add a note</b></label>
-      <textarea id="note" placeholder="What was done, what is still left, links to commits or tickets"></textarea>
-      <div class="row" style="margin-top:8px"><button class="btn" id="addNote">Add note</button></div>`}
+function weekHTML() {
+  return `
+    <h2>This Week</h2><p class="sub" id="wRange"></p>
+    <div class="tools">
+      <select id="wm" aria-label="Team member"><option value="">All members</option>${S.members.map((m) => `<option ${m === week.member ? 'selected' : ''}>${esc(m)}</option>`).join('')}</select>
     </div>
-    <div class="card"><h3>History</h3><ul class="tl">${events.map(e => {
-      const res = e.kind === 'check' || e.kind === 'hand_check' ? (/^(Check failed|Checked by hand: broken)/.test(e.detail) ? 'fail' : /^(Check passed|Checked by hand: still fine)/.test(e.detail) ? 'pass' : '') : '';
-      return `<li class="k-${e.kind} ${res}"><div class="when">${fmtTs(e.at)} · ${EVENT_LABEL[e.kind]} · <b>${esc(e.actor)}</b></div><div class="what">${esc(e.detail)}</div></li>`;
-    }).join('')}</ul></div>`;
-  const after = async msg => { toast(msg); await loadAll(); renderIssue(id); };
-  if (!lockedForMe) {
-    $('#saveSt').onclick = guard(async () => { await rpc('set_status', { p_id: id, p_status: $('#st').value, p_actor: me() }); await after('Status saved'); });
-    $('#addNote').onclick = guard(async () => {
-      const t = $('#note').value.trim(); if (!t) return toast('Type a note first.', true);
-      await rpc('add_note', { p_id: id, p_text: t, p_actor: me() }); await after('Note added');
-    });
-    if (!closed) {
-      $('#hcOk').onclick = guard(async () => { await rpc('hand_check', { p_id: id, p_ok: true, p_actor: me() }); await after('Recorded: still fine'); });
-      $('#hcBad').onclick = guard(async () => {
-        if (i.status === 'Fixed' && !confirm('Record it as broken? This reopens the issue and marks it as came back.')) return;
-        await rpc('hand_check', { p_id: id, p_ok: false, p_actor: me() }); await after('Recorded: broken');
-      });
-    }
-  }
-  if ($('#saveAsg')) $('#saveAsg').onclick = guard(async () => {
-    const v = $('#asg1').value;
-    await rpc('assign_issues', { p_ids: [id], p_assigned: v !== '', p_person: v && v !== TEAM ? v : null }); await after('Assignment saved');
-  });
-  if ($('#del')) $('#del').onclick = guard(async () => {
-    if (!confirm('Delete this issue? Only for issues entered by mistake.')) return;
-    await rpc('delete_issue', { p_id: id }); toast('Deleted'); location.hash = '#/issues';
+    <div class="chips" id="wChips"></div>
+    <div id="wBody"></div>`;
+}
+
+function bindWeek() {
+  $('#wm').addEventListener('change', (e) => { week.member = e.target.value; renderWeek(); });
+  $('#wBody').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-wm]'); if (!b) return; const m = b.dataset.wm;
+    week.member = week.member === m ? '' : m; $('#wm').value = week.member; renderWeek();
   });
 }
 
-// The issue exactly as the audit spreadsheet had it: the parent issue, then every column of this row.
-function auditCard(i) {
-  const a = i.audit; if (!a) return '';
-  const row = (k, v, code) => v ? `<tr><td class="k">${esc(k)}</td><td class="v ${code ? 'code' : ''}">${esc(v)}</td></tr>` : '';
-  return `<div class="card audit"><h3><span class="ref">${esc(a.ref)}</span> ${esc(a.issue)}</h3>
-    <p class="hint muted">From the SEO audit (${esc(a.source_file)}, tab "${esc(a.tab)}", row ${a.row_no}).</p>
-    <div class="tablewrap" style="margin-bottom:14px"><table><tbody>
-      ${row('Area', a.area)}${row('What we found', a.found)}${row('Why it matters', a.why)}${row('Fix (whole issue)', a.fix)}
-      ${row('Owner (role)', a.owner)}${row('Timing', a.timing)}${row('Approval needed', a.approval)}
-    </tbody></table></div>
-    <h3>This item, as in the sheet</h3>
-    <div class="tablewrap"><table><tbody>${(a.columns || []).map(([k, v]) => row(k, v, /^\s*</.test(v))).join('')}</tbody></table></div></div>`;
+function renderWeek() {
+  const days = weekSoFar();
+  const last = days[days.length - 1];
+  $('#wRange').textContent = `Monday ${fmtDate(days[0])} to ${DAYS[days.length - 1]} ${fmtDate(last)}` +
+    (last === today() ? ' (today)' : '') + ', ' + (week.member ? `showing ${week.member}` : 'all members');
+  const list = S.tasks.filter((t) => days.includes(t.date) && (!week.member || t.member === week.member));
+  const count = (arr, s) => arr.filter((t) => t.status === s).length;
+  const chip = (label, n) => `<div class="chip static"><b>${n}</b><span>${esc(label)}</span></div>`;
+  $('#wChips').innerHTML = chip('Tasks', list.length) + S.statuses.map((s) => chip(s, count(list, s))).join('');
+
+  let html = '';
+  // team overview as compact pills, always shown; counts come from the whole team, not the filtered list
+  const all = S.tasks.filter((t) => days.includes(t.date));
+  html += `<div class="card"><h3>By member <span class="hint">click a name to see that person's week, click it again for everyone, hover for status breakdown</span></h3>
+    <div class="mpills">${S.members.map((m) => { const mine = all.filter((t) => t.member === m);
+      const tip = S.statuses.map((s) => `${s}: ${count(mine, s)}`).join(', ');
+      return `<button class="mpill${mine.length ? '' : ' zero'}${m === week.member ? ' on' : ''}" data-wm="${esc(m)}" title="${esc(tip)}">${esc(m)} <b>${mine.length}</b></button>`; }).join('')}
+    </div></div>`;
+  html += days.map((d, i) => {
+    const items = list.filter((t) => t.date === d).sort((a, b) => a.member.localeCompare(b.member) || a.id - b.id);
+    return `<div class="card day"><h3>${DAYS[i]} <span class="hint">${fmtDate(d)}, ${items.length} task${items.length === 1 ? '' : 's'}</span></h3>
+      ${items.length ? `<div style="overflow-x:auto"><table class="ro fixed"><tbody>${items.map((t) => `<tr>
+        ${week.member ? '' : `<td class="mem">${esc(t.member)}</td>`}
+        <td>${esc(t.task)}</td>
+        <td class="st"><span class="badge ${cls(t.status)}">${esc(t.status)}</span></td>
+        <td class="muted nt">${esc(t.notes)}</td></tr>`).join('')}</tbody></table></div>`
+      : '<p class="hint" style="margin:0">No tasks logged.</p>'}</div>`;
+  }).join('');
+  $('#wBody').innerHTML = html;
 }
 
-// ---------- add / edit (owner) ----------
-function renderForm(id) {
-  const i = id ? S.issues.find(x => x.id === id) : null;
-  if (id && !i) { $('#main').innerHTML = '<div class="card">Issue not found.</div>'; return; }
-  const c = i?.check_config || {}, type = i?.check_type || 'manual';
-  const opt = (v, cur, label) => `<option value="${esc(v)}" ${v === cur ? 'selected' : ''}>${esc(label ?? v)}</option>`;
-  const areas = c.areas || ['header', 'footer'];
-  const tabNow = i?.category ?? (listCat && !listCat.startsWith('@@') ? listCat : '');
-  const tk = tabNow ? tabAssign(tabNow).key : null;   // a new issue in an assigned tab starts assigned the same way
-  const asgNow = i ? (!i.assigned ? '' : i.assigned_to || TEAM) : (tk && tk !== 'mixed' ? tk : '');
-  $('#main').innerHTML = `<p><a href="${i ? '#/issue/' + i.id : '#/issues'}">Back</a></p><h2>${i ? 'Edit issue #' + i.id : 'Add issue'}</h2>
-    <p class="sub">${i ? 'Changes are recorded in the history.' : 'Record what dev has been asked to fix.'}</p>
-    <form class="card form" id="f" novalidate>
-      <label class="l" for="title">Title</label><input type="text" id="title" maxlength="200" required value="${esc(i?.title)}" placeholder="Header and footer links redirect">
-      <label class="l" for="desc">Description</label><div><textarea id="desc" maxlength="5000" placeholder="What is wrong, and what fixed looks like">${esc(i?.description)}</textarea></div>
-      <label class="l" for="pages">Pages</label><div><textarea id="pages" placeholder="https://www.curemd.com/">${esc((i?.pages || []).join('\n'))}</textarea><p class="hint">One full address per line. The check runs on every page listed.</p></div>
-      <label class="l" for="asked">Date asked dev</label><div><input type="date" id="asked" value="${esc(i?.date_asked || today())}" max="${today()}" required><p class="hint">Use the real date you first asked, even if it was months ago.</p></div>
-      <label class="l" for="cat">Tab</label><div><input type="text" id="cat" list="catList" maxlength="60" value="${esc(tabNow)}" placeholder="Pick a tab or type a new name">
-        <datalist id="catList">${S.cats.map(c => `<option value="${esc(c)}">`).join('')}</datalist></div>
-      <label class="l" for="pri">Priority</label><select id="pri">${opt('', i?.priority || '', 'None')}${PRIORITIES.map(p => opt(p, i?.priority || '')).join('')}</select>
-      <label class="l" for="asg">Assigned to</label><div><select id="asg">${opt('', asgNow, 'Not assigned (hidden from dev)')}${opt(TEAM, asgNow, 'Whole dev team')}${[...new Set([...activeNames(), ...(i?.assigned_to ? [i.assigned_to] : [])])].map(n => opt(n, asgNow)).join('')}</select>
-        <p class="hint">Dev only sees issues that are assigned.</p></div>
-      <label class="l" for="ct">Automatic check</label><div>
-        <select id="ct">${Object.entries(CHECKS).map(([k, v]) => opt(k, type, v)).join('')}</select>
-        <div id="cfg" style="margin-top:10px"></div><div id="cwarn" class="warn" style="margin-top:10px" hidden>The weekly check runs on GitHub and can't reach office network addresses. Use Manual for pages on staging servers.</div></div>
-      <span></span><div class="row"><button class="btn">${i ? 'Save changes' : 'Add issue'}</button><a class="btn ghost" href="${i ? '#/issue/' + i.id : '#/issues'}">Cancel</a></div>
-    </form>`;
-  const cfgHtml = {
-    manual: () => '<p class="hint">No automatic test. The issue appears in the weekly report under "Check by hand".</p>',
-    links: () => `<div class="row">${[['header', 'Header'], ['footer', 'Footer'], ['page', 'Whole page']].map(([v, l]) => `<label><input type="checkbox" name="area" value="${v}" ${areas.includes(v) ? 'checked' : ''}> ${l}</label>`).join(' ')}</div>
-      <p class="hint">Every link to the same site in these areas must answer 200 directly. Links to other sites are ignored.</p>
-      <label for="exempt"><b>Exempt links</b> (optional, one per line)</label><textarea id="exempt" placeholder="Links that redirect on purpose, such as a login link">${esc((c.exempt || []).join('\n'))}</textarea>`,
-    response: () => `<div class="row"><select id="expect">${opt('200', c.expect || '200', 'Must answer 200 (no redirect)')}${opt('redirect', c.expect, 'Must redirect in one hop to')}${opt('gone', c.expect, 'Must answer 404 or 410 (removed)')}</select>
-      <input type="text" id="target" placeholder="https://www.curemd.com/new-address" value="${esc(c.target)}" style="flex:1"></div><p class="hint">Applies to each address in Pages.</p>`,
-    text: () => `<div class="row"><select id="mode">${opt('absent', c.mode || 'absent', 'Must not contain')}${opt('contains', c.mode, 'Must contain')}</select>
-      <input type="text" id="text" placeholder="Text, for example 25 years" value="${esc(c.text)}" style="flex:1"></div><p class="hint">Looks at the visible text of the page, not case sensitive.</p>`,
-    meta: () => `<div class="row"><select id="field">${opt('title', c.field || 'title', 'Page title')}${opt('description', c.field, 'Meta description')}</select>
-      <select id="match">${opt('exact', c.match || 'exact', 'must be exactly')}${opt('contains', c.match, 'must contain')}</select></div>
-      <input type="text" id="expected" value="${esc(c.expected)}" placeholder="Expected text" style="margin-top:8px">`,
-  };
-  const pageList = () => $('#pages').value.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
-  const showCfg = () => {
-    $('#cfg').innerHTML = cfgHtml[$('#ct').value]();
-    if ($('#expect')) { const t = () => ($('#target').hidden = $('#expect').value !== 'redirect'); $('#expect').onchange = t; t(); }
-    warn();
-  };
-  const warn = () => ($('#cwarn').hidden = !($('#ct').value !== 'manual' && pageList().some(internalAddr)));
-  $('#ct').onchange = showCfg; $('#pages').oninput = warn; showCfg();
-  $('#f').onsubmit = guard(async e => {
+function listHTML(v) {
+  const title = v.kind === 'member' ? v.name : 'All Tasks';
+  const own = v.kind !== 'member' || v.name === me();
+  const sub = (v.kind === 'all' ? 'Everyone\'s tasks in one place. Add yours below.'
+    : own ? 'Every task you have added. Edit anything inline.' : 'Every task this team member has added.') +
+    (S.admin ? ' As admin you can edit any task.' : own ? '' : ' Only they can change these.');
+  const memberSel = v.kind === 'member' || !S.admin
+    ? `<input value="${esc(v.kind === 'member' ? v.name : me())}" disabled aria-label="Team member">`
+    : `<select name="member" aria-label="Team member" required><option value="">Team member</option>${S.members.map((m) => `<option ${m === me() ? 'selected' : ''}>${esc(m)}</option>`).join('')}</select>`;
+  return `
+    <h2>${esc(title)}</h2><p class="sub">${sub}</p>
+    <div class="chips" id="chips"></div>
+    ${S.admin || own ? `<form class="card add" id="addForm" autocomplete="off">
+      <input type="date" name="date" value="${today()}" required aria-label="Date">
+      ${memberSel}
+      <input name="task" placeholder="Task name" maxlength="500" required class="wide" aria-label="Task name">
+      <select name="status" aria-label="Status">${S.statuses.map((s) => `<option>${esc(s)}</option>`).join('')}</select>
+      <input name="notes" placeholder="Notes / Blockers (optional)" maxlength="2000" class="wide" aria-label="Notes">
+      <button class="btn">Add task</button>
+    </form>` : ''}
+    <div class="tools">
+      <input id="q" type="search" placeholder="Search tasks and notes" aria-label="Search">
+      <select id="fs" aria-label="Filter by status"><option value="">All statuses</option>${S.statuses.map((s) => `<option>${esc(s)}</option>`).join('')}</select>
+      <label class="range">From <input type="date" id="fFrom" value="${filters.from}" aria-label="From date"></label>
+      <label class="range">To <input type="date" id="fTo" value="${filters.to}" aria-label="To date"></label>
+      <button type="button" class="btn ghost" id="fClear">Clear dates</button>
+    </div>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Date</th>${v.kind === 'all' ? '<th>Team Member</th>' : ''}<th>Task Name</th><th>Status</th><th>Notes / Blockers</th><th></th></tr></thead>
+      <tbody id="rows"></tbody></table></div>`;
+}
+
+function bindList(v) {
+  $('#addForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const pages = pageList(), ct = $('#ct').value;
-    const bad = pages.find(p => !/^https?:\/\/[^\s/]+/i.test(p));
-    if (!$('#title').value.trim()) throw new Error('Add a title.');
-    if (bad) throw new Error(`Not a full web address: ${bad}. Start it with https://`);
-    if (!$('#asked').value) throw new Error('Pick the date you asked dev.');
-    if (ct !== 'manual' && !pages.length) throw new Error('Add at least one page for the check to look at.');
-    const cfg = {};
-    if (ct === 'links') {
-      cfg.areas = [...document.querySelectorAll('[name=area]:checked')].map(x => x.value);
-      if (!cfg.areas.length) throw new Error('Tick at least one area.');
-      cfg.exempt = $('#exempt').value.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
-    } else if (ct === 'response') {
-      cfg.expect = $('#expect').value;
-      if (cfg.expect === 'redirect') { cfg.target = $('#target').value.trim(); if (!/^https?:\/\//i.test(cfg.target)) throw new Error('Add the full address it should redirect to.'); }
-    } else if (ct === 'text') {
-      cfg.mode = $('#mode').value; cfg.text = $('#text').value.trim(); if (!cfg.text) throw new Error('Add the text to look for.');
-    } else if (ct === 'meta') {
-      cfg.field = $('#field').value; cfg.match = $('#match').value; cfg.expected = $('#expected').value.trim(); if (!cfg.expected) throw new Error('Add the expected text.');
-    }
-    const p = { title: $('#title').value.trim(), description: $('#desc').value.trim(), pages, date_asked: $('#asked').value, assigned: $('#asg').value !== '', assigned_to: $('#asg').value === TEAM ? '' : $('#asg').value, priority: $('#pri').value, category: $('#cat').value.trim(), check_type: ct, check_config: cfg };
-    if (i) { await rpc('edit_issue', { p_id: i.id, p }); toast('Saved'); location.hash = '#/issue/' + i.id; }
-    else { const newId = await rpc('add_issue', { p }); toast('Issue added'); location.hash = '#/issue/' + newId; }
-  });
-}
-
-// ---------- import (owner) ----------
-// Reads an Excel or CSV file in the browser. Works with the SEO audit layout (title, "Fix:" and "Owner: | Timing: |
-// Approval:" lines above a header row that starts with "#", plus an "Issues & Fixes" summary sheet) and with plain
-// sheets whose first row is the column names.
-const XLSX_URL = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
-const loadXlsx = () => window.XLSX ? Promise.resolve() : new Promise((res, rej) => {
-  const t = document.createElement('script'); t.src = XLSX_URL; t.onload = res;
-  t.onerror = () => rej(new Error('Could not load the spreadsheet reader. Check the internet connection and try again.'));
-  document.head.append(t);
-});
-const cellRows = ws => XLSX.utils.sheet_to_json(ws, { header: 1, defval: '', raw: false, blankrows: true }).map(r => r.map(c => String(c ?? '').replace(/\r\n?/g, '\n').trim()));
-
-function summaryOf(wb) {   // the "Issues & Fixes" style sheet: one row per issue with an ID column
-  const out = {};
-  for (const n of wb.SheetNames) {
-    const R = cellRows(wb.Sheets[n]); const h = R.findIndex(r => r.includes('ID') && r.includes('Issue'));
-    if (h < 0) continue;
-    for (const r of R.slice(h + 1)) { const d = Object.fromEntries(R[h].map((k, j) => [k, r[j] || ''])); if (/^[A-Z]+\d+$/.test(d.ID)) out[d.ID] = d; }
-  }
-  return out;
-}
-
-function parseSheet(R, sheet, file, summary) {
-  let h = R.findIndex(r => r[0] === '#');
-  if (h < 0) h = R.findIndex(r => r.filter(Boolean).length >= 2 && r.some(c => /url|problem|issue|title|fix|priority|page/i.test(c)));
-  if (h < 0) return [];
-  const hdr = R[h], top = R.slice(0, h).map(r => r.filter(Boolean).join(' ')).filter(Boolean);
-  const ref = /^[A-Z]{1,3}\d+$/.test(sheet.split(' ')[0]) ? sheet.split(' ')[0] : '';
-  const meta = Object.fromEntries([...(top.find(t => /Owner:/.test(t)) || '').matchAll(/(Owner|Timing|Approval):\s*([^|]+)/g)].map(m => [m[1], m[2].trim()]));
-  const first = top[0] && !/^(Fix:|Back to)/.test(top[0]) && !/Owner:/.test(top[0]) ? top[0] : '';
-  const sm = summary[ref] || {};
-  const parent = {
-    ref, issue: sm.Issue || (ref && first.startsWith(ref) ? first.slice(ref.length).trim() : first), source_file: file, tab: sheet,
-    area: sm.Area || ({ T: 'Technical', P: 'Core Web Vitals', O: 'On-page' }[ref[0]] || ''), found: sm['What we found'] || '', why: sm['Why it matters'] || '',
-    fix: sm.Fix || (top.find(t => /^Fix:/.test(t)) || '').replace(/^Fix:\s*/, ''),
-    owner: sm['Owner (role)'] || meta.Owner || '', timing: sm.Timing || meta.Timing || '', approval: sm['Approval needed'] || meta.Approval || '',
-  };
-  const col = re => hdr.findIndex(x => re.test(x));
-  const num = hdr.indexOf('#'), cUrl = col(/^url|location|^page\b|address/i), cWhere = col(/link or label/i) >= 0 ? col(/link or label/i) : col(/^where/i),
-        cProb = col(/^problem|^issue$|^title|change or keep/i), cFix = col(/^fix|correct tag|solution|recommend/i), cPri = col(/priority/i);
-  const items = [];
-  R.slice(h + 1).forEach((r, k) => {
-    if (!r.some(Boolean) || (num >= 0 && !/^\d+$/.test(r[num]))) return;   // blank rows, notes and footnote tables
-    const where = (cUrl >= 0 && r[cUrl]) || (cWhere >= 0 && r[cWhere]) || '';
-    const problem = cProb >= 0 ? r[cProb] : '';
-    if (!where && !problem) return;
-    const short = where.replace(/^https?:\/\/(www\.)?curemd\.com/i, '') || where;
-    let title = [ref, problem, short].filter(Boolean).join(' · ');
-    if (title.length > 200) title = title.slice(0, 197) + '...';
-    items.push({
-      title, description: (cFix >= 0 && r[cFix]) || parent.fix, pages: /^https?:\/\//i.test(where) ? [where] : [],
-      priority: cPri >= 0 ? r[cPri] : '',
-      audit: { ...parent, row_no: num >= 0 ? +r[num] : k + 1, columns: hdr.map((c, j) => [c, r[j] || '']).filter(([c]) => c && c !== '#') },
-    });
-  });
-  return items;
-}
-
-let IMP = null;   // { file, sheets: { name: items[] } }
-function renderImport() {
-  $('#main').innerHTML = `<p><a href="#/issues">All issues</a></p><h2>Import issues</h2>
-    <p class="sub">Bring a sheet of issues into a tab in one go. Works with the SEO audit workbook and with any Excel or CSV sheet whose columns include things like URL, Problem, Fix and Priority.</p>
-    <div class="card"><label for="file"><b>1. Choose the file</b></label><div class="row" style="margin-top:8px"><input type="file" id="file" accept=".xlsx,.xls,.csv"></div></div>
-    <div id="imp"></div>`;
-  $('#file').onchange = guard(async e => {
-    const f = e.target.files[0]; if (!f) return;
-    $('#imp').innerHTML = '<div class="card muted">Reading the file...</div>';
-    await loadXlsx();
-    const wb = XLSX.read(await f.arrayBuffer(), { type: 'array' }), summary = summaryOf(wb), sheets = {};
-    for (const n of wb.SheetNames) { if (cellRows(wb.Sheets[n]).some(r => r.includes('ID') && r.includes('Issue'))) continue;   // the summary sheet
-      const items = parseSheet(cellRows(wb.Sheets[n]), n, f.name, summary); if (items.length) sheets[n] = items; }
-    if (!Object.keys(sheets).length) { $('#imp').innerHTML = '<div class="card">No issue rows found in this file. The sheet needs a header row with columns such as URL, Problem, Fix and Priority.</div>'; return; }
-    IMP = { file: f.name, sheets }; renderImportOptions(Object.keys(sheets)[0]);
-  });
-}
-function renderImportOptions(sheet) {
-  const all = IMP.sheets[sheet];
-  const pris = [...new Set(all.map(i => PRIORITIES.includes(i.priority) ? i.priority : '(none)'))].sort((a, b) => PRIORITIES.indexOf(a) - PRIORITIES.indexOf(b));
-  const hc = pris.filter(p => p === 'Critical' || p === 'High');
-  const defaultOn = p => hc.length ? hc.includes(p) : true;
-  const tabName = S.cats.includes(sheet) ? sheet : (listCat && !listCat.startsWith('@@') ? listCat : sheet);
-  $('#imp').innerHTML = `<div class="card form">
-      <label class="l" for="sheet">2. Sheet</label><select id="sheet">${Object.entries(IMP.sheets).map(([n, its]) => `<option value="${esc(n)}" ${n === sheet ? 'selected' : ''}>${esc(n)} (${its.length} rows)</option>`).join('')}</select>
-      <label class="l" for="itab">3. Into tab</label><div><input type="text" id="itab" list="catList2" maxlength="60" value="${esc(tabName)}">
-        <datalist id="catList2">${S.cats.map(c => `<option value="${esc(c)}">`).join('')}</datalist>
-        <p class="hint">Pick an existing tab or type a new name. Rows already open in that tab are skipped, so importing the same sheet again is safe. Imported issues start as not assigned; use Assign tab to hand them to dev.</p></div>
-      <span class="l">4. Priorities</span><div class="row">${pris.map(p => `<label><input type="checkbox" name="ipri" value="${esc(p)}" ${defaultOn(p) ? 'checked' : ''}> ${esc(p)} (${all.filter(i => (PRIORITIES.includes(i.priority) ? i.priority : '(none)') === p).length})</label>`).join(' ')}</div>
-      <label class="l" for="idate">5. Date asked dev</label><input type="date" id="idate" value="${today()}" max="${today()}">
-      <span></span><div><p id="icount" style="margin:0 0 8px"></p><button class="btn" id="go">Import</button></div>
-    </div><div class="card"><h3>Preview</h3><div id="iprev"></div></div>`;
-  const chosen = () => { const on = [...document.querySelectorAll('[name=ipri]:checked')].map(x => x.value); return all.filter(i => on.includes(PRIORITIES.includes(i.priority) ? i.priority : '(none)')); };
-  const refresh = () => {
-    const c = chosen();
-    $('#icount').innerHTML = `<b>${c.length}</b> of ${all.length} rows will be imported into <b>${esc($('#itab').value.trim() || '(no tab)')}</b>.`;
-    $('#iprev').innerHTML = c.length ? `<div class="tablewrap"><table style="min-width:0"><thead><tr><th>Issue</th><th>Priority</th><th>Fix</th></tr></thead><tbody>${c.slice(0, 8).map(i =>
-      `<tr><td>${esc(i.title)}</td><td>${prioBadge(i)}</td><td style="white-space:pre-wrap">${esc(i.description.slice(0, 160))}</td></tr>`).join('')}</tbody></table></div>${c.length > 8 ? `<p class="muted">and ${c.length - 8} more</p>` : ''}` : '<p class="muted">Nothing selected.</p>';
-  };
-  $('#sheet').onchange = e => renderImportOptions(e.target.value);
-  document.querySelectorAll('[name=ipri]').forEach(x => x.onchange = refresh); $('#itab').oninput = refresh; refresh();
-  $('#go').onclick = guard(async () => {
-    const items = chosen(), cat = $('#itab').value.trim();
-    if (!cat) throw new Error('Type a tab name.');
-    if (!items.length) throw new Error('Tick at least one priority.');
-    $('#go').disabled = true; let added = 0, skipped = 0;
+    const f = new FormData(e.target);
+    const body = { date: f.get('date'), member: v.kind === 'member' ? v.name : S.admin ? f.get('member') : me(),
+                   task: f.get('task'), status: f.get('status'), notes: f.get('notes') };
     try {
-      for (let k = 0; k < items.length; k += 200) {
-        $('#go').textContent = `Importing ${Math.min(k + 200, items.length)} of ${items.length}...`;
-        const r = await rpc('import_issues', { p_category: cat, p_date: $('#idate').value || today(), p_file: IMP.file, p_items: items.slice(k, k + 200) });
-        added += r.added; skipped += r.skipped;
-      }
-    } finally { $('#go').disabled = false; $('#go').textContent = 'Import'; }
-    toast(`Imported ${added} issue${added === 1 ? '' : 's'} into ${cat}` + (skipped ? `. Skipped ${skipped} already in that tab.` : '.'));
-    listCat = cat; store.set('dit_cat', cat); IMP = null; location.hash = '#/issues';
+      const t = await db.addTask(body);
+      putTask(t);
+      e.target.task.value = ''; e.target.notes.value = '';
+      e.target.task.focus();
+      toast('Task added for ' + t.member);
+      renderNav(); renderTable(v);
+    } catch (err) { toast(err.message, true); }
+  });
+  $('#q').addEventListener('input', (e) => { filters.q = e.target.value.toLowerCase(); renderTable(v); });
+  $('#fs').addEventListener('change', (e) => { filters.status = e.target.value; renderTable(v); });
+  $('#fFrom').addEventListener('change', (e) => { filters.from = e.target.value; renderTable(v); });
+  $('#fTo').addEventListener('change', (e) => { filters.to = e.target.value; renderTable(v); });
+  $('#fClear').addEventListener('click', () => { filters.from = filters.to = ''; $('#fFrom').value = $('#fTo').value = ''; renderTable(v); });
+  $('#rows').addEventListener('change', async (e) => {
+    const tr = e.target.closest('tr'); if (!tr) return;
+    const field = e.target.dataset.f;
+    try {
+      const t = await db.updateTask(Number(tr.dataset.id), { [field]: e.target.value });
+      putTask(t);
+      if (field === 'status') { e.target.className = 's ' + cls(t.status); renderNav(); renderChips(v); }
+      toast('Saved');
+    } catch (err) { toast(err.message, true); refresh(); }
+  });
+  $('#rows').addEventListener('click', async (e) => {
+    if (!e.target.classList.contains('del')) return;
+    const tr = e.target.closest('tr');
+    const t = S.tasks.find((x) => x.id === Number(tr.dataset.id));
+    if (!confirm(`Delete this task?\n\n${t.task}`)) return;
+    try {
+      await db.deleteTask(t.id);
+      S.tasks = S.tasks.filter((x) => x.id !== t.id);
+      toast('Task deleted'); renderNav(); renderTable(v);
+    } catch (err) { toast(err.message, true); }
+  });
+  $('#chips').addEventListener('click', (e) => {
+    const c = e.target.closest('.chip'); if (!c) return;
+    filters.status = filters.status === c.dataset.s ? '' : c.dataset.s;
+    $('#fs').value = filters.status; renderTable(v);
   });
 }
 
-// ---------- weekly report ----------
-async function renderReport() {
-  const run = S.lastRun, is = S.issues.filter(i => i.status !== 'Closed');
-  const reopenedEv = run ? await rows(sb.from('issue_events').select('issue_id').eq('kind', 'came_back').eq('actor', 'Weekly check').gte('at', run.started)) : [];
-  const reopenedIds = new Set(reopenedEv.map(e => e.issue_id));
-  const reopened = is.filter(i => reopenedIds.has(i.id));
-  const stillFailing = is.filter(i => i.check_type !== 'manual' && i.last_check_result === 'fail' && !reopenedIds.has(i.id));
-  const passingNotFixed = is.filter(i => RANK[i.status] === 1 && i.last_check_result === 'pass');
-  const couldNot = is.filter(i => i.check_type !== 'manual' && i.last_check_result === 'error');
-  const manual = sortIssues(is.filter(i => i.check_type === 'manual'));
-  const stale = !run || Date.now() - new Date(run.finished) > 8 * 864e5;
-  const list = (arr, extra = () => '') => arr.length ? `<ul>${arr.map(i => `<li><a href="#/issue/${i.id}">#${i.id} ${esc(i.title)}</a> ${statusBadge(i)} ${extra(i)}</li>`).join('')}</ul>` : '<p class="muted">None.</p>';
-  $('#main').innerHTML = `<h2>Weekly report</h2>
-    <p class="sub">The automatic check runs every Monday morning (06:00 Pakistan time) on every issue that is not closed.</p>
-    ${stale ? `<div class="warn" style="margin-bottom:16px">${run ? `The weekly check has not run since ${fmtTs(run.finished)}.` : 'The weekly check has not run yet.'} Open the Actions tab of the GitHub repository to see why, or click Run workflow there to run it now.</div>` : ''}
-    ${run ? `<div class="chips"><div class="chip"><b>${fmtDay(localDay(run.finished))}</b><span>Last run</span></div>
-      <div class="chip"><b>${run.checked}</b><span>Checked</span></div><div class="chip"><b>${run.passed}</b><span>Passed</span></div>
-      <div class="chip"><b>${run.failed}</b><span>Failed</span></div><div class="chip amber"><b>${run.reopened}</b><span>Reopened</span></div>
-      <div class="chip"><b>${run.errors}</b><span>Could not check</span></div></div>` : ''}
-    <div class="card"><h3>Came back in the last run</h3><p class="hint muted">Dev had fixed these. They are broken again.</p>${list(reopened, i => `<span class="muted">came back ${i.times_came_back} time${i.times_came_back === 1 ? '' : 's'}</span>`)}</div>
-    <div class="card"><h3>Still failing</h3><p class="hint muted">Not fixed yet, and the check still fails.</p>${list(stillFailing)}</div>
-    <div class="card"><h3>Check passing, not marked fixed</h3><p class="hint muted">Looks fixed on the live site. Mark it Fixed if dev has done the work.</p>${list(passingNotFixed)}</div>
-    <div class="card"><h3>Could not check</h3><p class="hint muted">The site did not answer properly, so nothing was changed.</p>${list(couldNot)}</div>
-    <div class="card"><h3>Check by hand (${manual.length})</h3><p class="hint muted">Issues with no automatic check. Open each one and record the result.</p>
-      <details ${manual.length <= 15 ? 'open' : ''}><summary>Show the list</summary>
-      ${list(manual, i => `${prioBadge(i)} <span class="muted">${i.last_check_at ? 'last checked ' + fmtDay(localDay(i.last_check_at)) : 'never checked'}</span>`)}</details></div>`;
+function scoped(v) {   // member + date range; chips and table both use this so the counts match the rows
+  return S.tasks.filter((t) => (v.kind !== 'member' || t.member === v.name) &&
+    (!filters.from || t.date >= filters.from) && (!filters.to || t.date <= filters.to));
 }
 
-// ---------- settings (owner) ----------
-function renderSettings() {
-  const act = S.members.filter(m => m.active), old = S.members.filter(m => !m.active);
-  $('#main').innerHTML = `<h2>Settings</h2><p class="sub">Only you can see this page.</p>
-    <div class="card"><h3>Dev team names</h3><p class="hint muted">Dev picks one of these after typing the dev password. Removing a name keeps its history.</p>
-      <div class="names">${act.map(m => `<span>${esc(m.name)} <button title="Remove" aria-label="Remove ${esc(m.name)}" data-rm="${esc(m.name)}">×</button></span>`).join('') || '<span class="muted" style="background:none">No names yet.</span>'}</div>
-      <form class="row" id="addName"><input id="nm" maxlength="80" placeholder="Name" aria-label="New name"><button class="btn">Add</button></form>
-      ${old.length ? `<p class="hint muted" style="margin-top:12px">Removed: ${old.map(m => `${esc(m.name)} <button class="linkbtn" style="border:0;background:none;color:var(--blue);cursor:pointer" data-back="${esc(m.name)}">put back</button>`).join(', ')}</p>` : ''}</div>`;
-  const set = (n, a) => guard(async () => { await rpc('set_dev_member', { p_name: n, p_active: a }); await loadAll(); renderSettings(); });
-  $('#main').querySelectorAll('[data-rm]').forEach(b => b.onclick = set(b.dataset.rm, false));
-  $('#main').querySelectorAll('[data-back]').forEach(b => b.onclick = set(b.dataset.back, true));
-  $('#addName').onsubmit = e => { e.preventDefault(); const n = $('#nm').value.trim(); if (n) set(n, true)(); };
+function renderChips(v) {
+  const list = scoped(v);
+  const chip = (label, n, s) => `<button class="chip ${filters.status === s ? 'on' : ''}" data-s="${esc(s)}"><b>${n}</b><span>${esc(label)}</span></button>`;
+  $('#chips').innerHTML = chip('Total', list.length, '') +
+    S.statuses.map((s) => chip(s, list.filter((t) => t.status === s).length, s)).join('');
 }
 
-route();
+function renderTable(v) {
+  renderChips(v);
+  const rows = scoped(v)
+    .filter((t) => !filters.status || t.status === filters.status)
+    .filter((t) => !filters.q || (t.task + ' ' + t.notes + ' ' + t.member).toLowerCase().includes(filters.q))
+    .sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
+  const cols = v.kind === 'all' ? 6 : 5;
+  $('#rows').innerHTML = rows.length ? rows.map((t) => { const ro = canEdit(t) ? '' : ' disabled'; return `
+    <tr data-id="${t.id}">
+      <td class="date"><input type="date" data-f="date" value="${esc(t.date)}" title="${fmtDate(t.date)}" aria-label="Date"${ro}></td>
+      ${v.kind === 'all' ? `<td class="mem"><a href="#m/${encodeURIComponent(t.member)}" style="color:inherit">${esc(t.member)}</a></td>` : ''}
+      <td><input data-f="task" value="${esc(t.task)}" maxlength="500" aria-label="Task name"${ro}></td>
+      <td class="st"><select data-f="status" class="s ${cls(t.status)}" aria-label="Status"${ro}>${S.statuses.map((s) => `<option ${s === t.status ? 'selected' : ''}>${esc(s)}</option>`).join('')}</select></td>
+      <td><input data-f="notes" value="${esc(t.notes)}" maxlength="2000" placeholder="${ro ? '' : 'Add a note'}" aria-label="Notes"${ro}></td>
+      <td class="x">${ro ? '' : '<button class="del" title="Delete task" aria-label="Delete task">&times;</button>'}</td>
+    </tr>`; }).join('')
+    : `<tr><td colspan="${cols}" class="empty">${S.tasks.length ? 'No tasks match.' : 'No tasks yet. Add the first one above.'}</td></tr>`;
+}
+
+// ---------- settings ----------
+function settingsHTML() {
+  return `
+    <h2>Settings and import</h2><p class="sub">Manage the team list, bring in tasks from your Excel sheet, or download everything.</p>
+    <div class="card">
+      <h3>Team members</h3>
+      <p class="hint">Removing someone hides them from the lists. Their tasks stay on All Tasks.</p>
+      <div class="members" id="memberList"></div>
+      <form class="row" id="memberForm"><input name="name" placeholder="New member name" maxlength="80" required><button class="btn">Add member</button></form>
+    </div>
+    <div class="card">
+      <h3>Import from Excel</h3>
+      <p class="hint">In your sheet, select the rows with columns in this order: Date, Team Member, Task Name, Status, Notes / Blockers. Copy, paste below, then Import. A header row is skipped. New names are added to the team automatically.</p>
+      <textarea id="paste" placeholder="09-Nov-2026	Atif Shahzad	website audit report	Completed	"></textarea>
+      <div class="row" style="margin-top:8px"><button class="btn" id="importBtn">Import</button><span class="hint" id="importInfo"></span></div>
+    </div>
+    <div class="card">
+      <h3>Download</h3>
+      <p class="hint">A CSV of every task that opens in Excel.</p>
+      <button class="btn ghost" id="csvBtn">Download all tasks (CSV)</button>
+    </div>`;
+}
+
+function renderMembersList() {
+  $('#memberList').innerHTML = S.members.map((m) =>
+    `<span>${esc(m)} <button data-m="${esc(m)}" title="Remove ${esc(m)}" aria-label="Remove ${esc(m)}">&times;</button></span>`).join('');
+}
+
+function parseDate(s) {
+  s = s.trim(); let m;
+  const iso = (y, mo, d) => {
+    y = Number(y); if (y < 100) y += 2000;
+    const out = `${y}-${String(mo).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    return isNaN(Date.parse(out)) ? null : out;
+  };
+  if ((m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/))) return iso(m[1], m[2], m[3]);
+  if ((m = s.match(/^(\d{1,2})[-\s/]([A-Za-z]{3})[A-Za-z]*[-\s/,]+(\d{2,4})$/))) {
+    const mo = MONTHS.findIndex((x) => x.toLowerCase() === m[2].toLowerCase()) + 1;
+    return mo ? iso(m[3], mo, m[1]) : null;
+  }
+  if ((m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/))) return iso(m[3], m[1], m[2]); // US m/d/y, as Excel copies it
+  return null;
+}
+
+function parsePaste(text) {
+  const rows = [], bad = [];
+  text.split(/\r?\n/).forEach((line, i) => {
+    if (!line.trim()) return;
+    const [d = '', member = '', task = '', status = '', notes = ''] = line.split('\t');
+    if (i === 0 && /^date$/i.test(d.trim())) return;
+    const date = parseDate(d);
+    const st = S.statuses.find((s) => s.toLowerCase() === status.trim().toLowerCase()) || 'Not Started';
+    if (!date || !member.trim() || !task.trim()) { bad.push(i + 1); return; }
+    rows.push({ date, member: member.trim(), task: task.trim(), status: st, notes: notes.trim() });
+  });
+  return { rows, bad };
+}
+
+function bindSettings() {
+  $('#memberForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    try { S = await db.addMember(e.target.name.value); e.target.reset(); toast('Member added'); render(); }
+    catch (err) { toast(err.message, true); }
+  });
+  $('#memberList').addEventListener('click', async (e) => {
+    const m = e.target.dataset.m; if (!m) return;
+    if (!confirm(`Remove ${m} from the team list? Their tasks are kept.`)) return;
+    try { S = await db.removeMember(m); toast('Member removed'); render(); }
+    catch (err) { toast(err.message, true); }
+  });
+  $('#paste').addEventListener('input', (e) => {
+    const { rows, bad } = parsePaste(e.target.value);
+    $('#importInfo').textContent = `${rows.length} task(s) ready` + (bad.length ? `. Skipping line(s) ${bad.join(', ')} (missing date, name or task).` : '.');
+  });
+  $('#importBtn').addEventListener('click', async () => {
+    const { rows } = parsePaste($('#paste').value);
+    if (!rows.length) return toast('Paste some rows first.', true);
+    try { const r = await db.importRows(rows); S = r; $('#paste').value = ''; $('#importInfo').textContent = '';
+          toast(`Imported ${r.added} task(s)`); render(); }
+    catch (err) { toast(err.message, true); }
+  });
+  $('#csvBtn').addEventListener('click', () => {
+    const q = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+    const lines = [['Date', 'Team Member', 'Task Name', 'Status', 'Notes / Blockers'].map(q).join(',')]
+      .concat([...S.tasks].sort((a, b) => a.date.localeCompare(b.date) || a.id - b.id)
+        .map((t) => [fmtDate(t.date), t.member, t.task, t.status, t.notes].map(q).join(',')));
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([String.fromCharCode(0xFEFF) + lines.join('\r\n')], { type: 'text/csv' }));
+    a.download = `team-tasks-${today()}.csv`; a.click();
+  });
+}
+
+// ---------- boot ----------
+function render() {
+  document.body.classList.toggle('signedout', !signedIn());   // hides the sidebar button and tabs on the sign in screen
+  if (!signedIn()) return showPick();   // also catches a name the admin has since removed
+  renderHeader(); renderNav(); renderMain();
+}
+// Redraw for background changes, but never while someone is typing in the table or the import box.
+let dirty = false, redrawTimer;
+function softRender() { dirty = true; clearTimeout(redrawTimer); redrawTimer = setTimeout(flush, 300); }
+function flush() {
+  const a = document.activeElement;
+  if (a && a.closest && a.closest('#rows, textarea')) return;   // tried again when focus leaves
+  if (dirty) { dirty = false; render(); }
+}
+document.addEventListener('focusout', () => setTimeout(flush, 0));
+
+async function refresh() {
+  try { S = await db.state(); softRender(); }
+  catch (err) {
+    const { data } = await sb.auth.getSession();
+    if (!data.session) return showLogin();
+    toast('Cannot reach the tracker. Check your internet connection.', true);
+  }
+}
+
+// Live updates: each change arrives as one row and is applied in place, so nobody re-downloads the whole list.
+let live = false, started = false;
+function applyTaskChange(p) {
+  if (p.eventType === 'DELETE') S.tasks = S.tasks.filter((t) => t.id !== p.old.id);
+  else putTask(p.new);
+  softRender();
+}
+function start() {
+  refresh();
+  if (started) return;
+  started = true;
+  let first = true;
+  sb.channel('tracker')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, applyTaskChange)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'members' }, async () => {
+      try { S.members = await loadMembers(); softRender(); } catch {}
+    })
+    .subscribe((status) => {
+      live = status === 'SUBSCRIBED';
+      if (live && !first) refresh();   // reconnected: catch up on anything missed while offline
+      if (live) first = false;
+    });
+  // If the office network blocks live updates, catch up whenever someone comes back to the tab.
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && !live) refresh(); });
+}
+
+function showLogin() {
+  currentView = null;
+  $('#nav').innerHTML = ''; $('#who').innerHTML = '';
+  $('#main').innerHTML = `<form class="card login" id="loginForm">
+      <h2>Team Task Tracker</h2><p class="sub" style="margin:0">Enter the team password to continue.</p>
+      <input type="password" name="pw" required autocomplete="current-password" aria-label="Team password" placeholder="Team password">
+      <button class="btn">Sign in</button></form>`;
+  $('#loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const password = e.target.pw.value;   // the team password, or the admin password for the main admin
+    let { error } = await sb.auth.signInWithPassword({ email: TEAM_EMAIL, password });
+    if (error && error.status === 400) ({ error } = await sb.auth.signInWithPassword({ email: ADMIN_EMAIL, password }));
+    if (error) return toast(error.status === 400 ? 'Wrong password.' : error.message, true);
+    start();
+  });
+}
+
+$('#who').addEventListener('click', async (e) => {
+  if (e.target.id !== 'signOut') return;
+  store.set('tt_me', '');
+  await sb.auth.signOut();               // ends the shared password session on this browser
+  location.replace(location.pathname);   // fresh start: back to the password screen, live updates closed
+});
+window.addEventListener('hashchange', () => { if (started) render(); });
+if (!configured) $('#main').innerHTML = '<div class="card"><h2>Setup not finished</h2><p>Open index.html and paste the Supabase project URL and anon key at the top of the script. SETUP.txt has the steps.</p></div>';
+else sb.auth.getSession().then(({ data }) => (data.session ? start() : showLogin()));
 </script>
 </body>
 </html>
